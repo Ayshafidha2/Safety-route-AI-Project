@@ -1,0 +1,327 @@
+{% extends "user/user_layout.html" %}
+
+{% block user_title %}Plan Your Trip{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* --- Styles moved from user_dashboard.html --- */
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .page-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark-text);
+    }
+    .page-header p {
+        font-size: 1.1rem;
+        color: var(--secondary-color);
+        max-width: 700px;
+        margin: 10px auto 0 auto;
+    }
+    .plan-trip-section { 
+        background-color: var(--white); 
+        border-radius: 24px; 
+        padding: 40px; 
+        margin-bottom: 40px; 
+        box-shadow: var(--shadow); 
+        text-align: center; 
+        border: 1px solid var(--border-color);
+    }
+    .form-row { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
+    .form-group { flex: 1; display: flex; flex-direction: column; min-width: 220px; text-align: left;}
+    .form-group label { font-weight: 500; margin-bottom: 8px; color: var(--secondary-color); font-size: 0.95rem; }
+    .form-group select { 
+        width: 100%; 
+        padding: 12px 15px; 
+        border: 1px solid var(--border-color); 
+        border-radius: 10px; 
+        font-size: 1rem; 
+        background-color: var(--white); 
+        appearance: none; -webkit-appearance: none; -moz-appearance: none; 
+        background-image: url('data:image/svg+xml;utf8,<svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>'); background-repeat: no-repeat; background-position: right 15px center; background-size: 1.2em; 
+        transition: border-color 0.2s, box-shadow 0.2s; 
+    }
+    .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+    .btn-primary { 
+        background: var(--primary-color);
+        color: var(--white); 
+        padding: 14px 40px; 
+        border: none; 
+        border-radius: 10px; 
+        cursor: pointer; 
+        font-size: 1rem; 
+        font-weight: 600; 
+        transition: all 0.2s ease; 
+        box-shadow: var(--shadow); 
+    }
+    .btn-primary:hover { 
+        background-color: var(--primary-hover-color);
+        transform: translateY(-2px); 
+        box-shadow: var(--shadow-lg); 
+    }
+    .leaflet-routing-container { display: none !important; }
+
+    /* Trip Report Section */
+    .generated-route-section { display: none; }
+    .generated-route-section.active { display: block; }
+    .trip-report-container { background-color: var(--white); border-radius: 24px; padding: 40px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+    .report-header { text-align: center; margin-bottom: 25px; }
+    .report-header h2 { font-size: 2rem; font-weight: 700; color: var(--dark-text); margin-bottom: 5px; }
+    .report-header h2 i { color: var(--success-color); }
+    .report-header p { font-size: 1rem; color: var(--secondary-color); margin-top: 0; }
+    .summary-prediction-wrapper { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
+    .summary-prediction-wrapper > .prediction-card { flex: 1 1 55%; margin-bottom: 0; }
+    .summary-prediction-wrapper > .route-summary-card { flex: 1 1 45%; margin-bottom: 0; }
+    .prediction-card { background-color: #fffbeb; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 20px; }
+    .route-summary-card { background-color: #f8f9fa; border-radius: 12px; padding: 25px; border: 1px solid var(--border-color); }
+    .details-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    #map { height: 450px; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1; }
+    .stops-section h4 { font-size: 1.3rem; font-weight: 600; color: var(--dark-text); margin-top: 0; margin-bottom: 15px; }
+</style>
+{% endblock %}
+
+{% block user_content %}
+
+<div class="page-header">
+    <h2><i class="fas fa-route"></i> Plan Your Safe Trip</h2>
+    <p>Select your start and end points, add your preferences, and let our smart planner create the perfect, safety-conscious itinerary for you.</p>
+</div>
+
+<div class="plan-trip-section">
+    <form id="planTripForm">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="sourceDistrict">Source District:</label>
+                <select id="sourceDistrict" name="sourceDistrict" required>
+                    <option value="">Choose...</option>
+                    {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="destinationDistrict">Destination District:</label>
+                <select id="destinationDistrict" name="destinationDistrict" required>
+                    <option value="">Choose...</option>
+                    {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="interest">Interest (Optional):</label>
+                <select id="interest" name="interest">
+                    <option value="">Any</option>
+                    {% for interest in interests %}
+                        <option value="{{ interest }}">{{ interest | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="budget">Budget (Optional):</label>
+                <select id="budget" name="budget">
+                    <option value="">Any</option>
+                    <option value="5000">Under ₹5,000</option>
+                    <option value="10000">Under ₹10,000</option>
+                    <option value="15000">Under ₹15,000</option>
+                    <option value="20000">₹20,000+</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" id="generateBtn">
+            <span id="btn-text"><i class="fas fa-magic"></i> Generate Safe Route</span>
+            <span id="btn-spinner" style="display:none"><i class="fas fa-spinner fa-spin"></i> Generating...</span>
+        </button>
+    </form>
+</div>
+
+<div id="generatedRouteSection" class="generated-route-section">
+    <!-- Route details will be injected here by JavaScript -->
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script>
+// This is the same script that was on user_dashboard.html
+const favoriteIds = new Set({{ favorite_ids_json | tojson | safe }});
+const districtCoordinates = {{ districts_coords_json | tojson | safe }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    let leafletMap;
+    let currentRouteData = null; 
+
+    document.getElementById('planTripForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const source = document.getElementById('sourceDistrict').value;
+        const destination = document.getElementById('destinationDistrict').value;
+        const budget = document.getElementById('budget').value;
+        const interest = document.getElementById('interest').value;
+
+        if (!source || !destination) {
+            alert('Please select a source and destination district.');
+            return;
+        }
+        if (source === destination) {
+            alert('Source and Destination cannot be the same.');
+            return;
+        }
+
+        const generateBtn = document.getElementById('generateBtn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        generateBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnSpinner.style.display = 'inline';
+
+        try {
+            const response = await fetch('/api/generate-route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ source, destination, budget, interest })
+            });
+            const data = await response.json();
+            const routeSection = document.getElementById('generatedRouteSection');
+
+            if (data.success) {
+                currentRouteData = data.route;
+                renderRoute(currentRouteData);
+            } else {
+                renderFallbackRoute(source, destination, data.message);
+            }
+            routeSection.classList.add('active');
+            routeSection.scrollIntoView({ behavior: 'smooth' });
+
+        } catch (error) {
+            console.error('Error fetching route:', error);
+            alert('An error occurred while generating the route. Please try again.');
+        } finally {
+            generateBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+        }
+    });
+
+    function initMapAndRoute(source, destination, isFallback = false) {
+        if (leafletMap) { leafletMap.remove(); }
+        
+        const sourceCoords = districtCoordinates[source];
+        const destCoords = districtCoordinates[destination];
+        if (!sourceCoords || !destCoords) { 
+            document.getElementById("map").innerHTML = "<p>Could not find coordinates for the selected districts.</p>"; 
+            return; 
+        }
+        
+        leafletMap = L.map('map').setView([10.8505, 76.2711], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(leafletMap);
+        
+        const routingControl = L.Routing.control({
+            waypoints: [ L.latLng(sourceCoords.lat, sourceCoords.lng), L.latLng(destCoords.lat, destCoords.lng) ],
+            routeWhileDragging: false, 
+            addWaypoints: false, 
+            draggableWaypoints: false,
+            lineOptions: { styles: [{ color: 'var(--primary-color)', opacity: 0.8, weight: 6 }] }
+        }).addTo(leafletMap);
+
+        if (!isFallback) {
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                if (routes && routes.length > 0) {
+                    const summary = routes[0].summary;
+                    const totalDistanceKm = (summary.totalDistance / 1000).toFixed(1);
+                    const totalTimeSeconds = summary.totalTime;
+                    const costPerKm = 15; 
+                    const estimatedTravelCost = (totalDistanceKm * costPerKm).toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+                    updateRouteSummaryWithTravelDetails(totalDistanceKm, estimatedTravelCost, totalTimeSeconds);
+                    adjustStopBudgets(totalDistanceKm); 
+                } else {
+                     console.warn("No routes found by Leaflet Routing Machine.");
+                     updateRouteSummaryWithTravelDetails('N/A', 'N/A', 'N/A');
+                }
+            }).on('routingerror', function(e) {
+                console.error('Leaflet Routing Error:', e.error.message);
+                updateRouteSummaryWithTravelDetails('Error', 'Error', 'Error');
+            });
+        }
+    }
+
+    function updateRouteSummaryWithTravelDetails(distanceKm, estimatedCost, totalTimeSeconds) {
+        const distanceEl = document.querySelector('#summary-distance strong');
+        const timeEl = document.querySelector('#summary-time strong');
+        const costEl = document.querySelector('#summary-cost strong');
+
+        if (distanceEl) { distanceEl.textContent = distanceKm !== 'Error' ? `${distanceKm} km` : 'N/A'; }
+        if (costEl) { costEl.textContent = estimatedCost !== 'Error' ? estimatedCost : 'N/A'; }
+        if (timeEl) {
+            if (totalTimeSeconds && totalTimeSeconds !== 'Error') {
+                const hours = Math.floor(totalTimeSeconds / 3600);
+                const minutes = Math.round((totalTimeSeconds % 3600) / 60);
+                timeEl.textContent = `${hours}h ${minutes}m`;
+            } else { timeEl.textContent = 'N/A'; }
+        }
+    }
+
+    function adjustStopBudgets(distanceInKm) {
+        const budgetElements = document.querySelectorAll('.stop-budget');
+        if (budgetElements.length === 0 || !currentRouteData || !currentRouteData.stops) return;
+        let budgetMultiplier = 1.0, adjustmentNote = '';
+        if (distanceInKm > 300) { budgetMultiplier = 0.85; adjustmentNote = 'Reduced for long distance'; } 
+        else if (distanceInKm < 150) { budgetMultiplier = 1.10; adjustmentNote = 'Increased for short distance'; }
+
+        budgetElements.forEach((el, index) => {
+            const originalBudget = currentRouteData.stops[index] ? currentRouteData.stops[index].budget : 0; 
+            if (!isNaN(originalBudget) && originalBudget > 0) {
+                const adjustedBudget = Math.round((originalBudget * budgetMultiplier) / 50) * 50;
+                let noteHtml = adjustmentNote ? `<span title="${adjustmentNote}" style="font-size: 0.8em; color: var(--secondary-color); cursor: help;"> (adjusted)</span>` : '';
+                el.innerHTML = `Est. Budget: ₹${adjustedBudget.toLocaleString()}${noteHtml}`;
+            } else { el.innerHTML = `Est. Budget: N/A`; }
+        });
+    }
+
+    function renderRoute(routeData) {
+        const routeSection = document.getElementById('generatedRouteSection');  
+        const stopsHTML = routeData.stops.map(stop => {
+            const isFavorited = favoriteIds.has(stop.id);
+            const favClass = isFavorited ? 'favorited' : 'not-favorited';
+            const favTitle = isFavorited ? 'Remove from Favorites' : 'Add to Favorites';
+            let locationText = stop.type;
+            if (stop.district !== routeData.source && stop.district !== routeData.destination) { locationText += ` • <strong>${stop.district}</strong>`; }
+            return `<div class="stop-card"><button class="favorite-btn ${favClass}" data-id="${stop.id}" title="${favTitle}"><i class="fas fa-heart"></i></button><h5>${stop.name}</h5><p class="stop-location">${locationText}</p><p class="stop-budget">Est. Budget: ₹${stop.budget ? stop.budget.toLocaleString() : 'N/A'}</p><span class="status-badge ${stop.safety_class}">${stop.safety_text}</span></div>`;
+        }).join('');
+        const predictionHTML = `<div class="prediction-card"><h4><i class="fas fa-shield-alt"></i> AI Risk Alert for ${routeData.destination}</h4><div class="prediction-alert"><i class="fas fa-cloud-showers-heavy"></i><div><strong>Disaster Outlook</strong><p>${routeData.prediction.disaster_alert}</p></div></div><div class="prediction-alert"><i class="fas fa-syringe"></i><div><strong>Health Outlook</strong><p>${routeData.prediction.disease_alert}</p></div></div></div>`;
+        const summaryHTML = `<div class="route-summary-card"><div class="route-summary-details"><div class="summary-item"><i class="fas fa-map-marker-alt"></i><p>From</p><strong>${routeData.source}</strong></div><div class="summary-item"><i class="fas fa-flag-checkered"></i><p>To</p><strong>${routeData.destination}</strong></div><div class="summary-item"><i class="fas fa-lightbulb"></i><p>Interest</p><strong>${routeData.interest}</strong></div><div class="summary-item" id="summary-distance"><i class="fas fa-road"></i><p>Distance</p><strong>...</strong></div><div class="summary-item" id="summary-time"><i class="fas fa-clock"></i><p>Travel Time</p><strong>...</strong></div><div class="summary-item" id="summary-cost"><i class="fas fa-rupee-sign"></i><p>Est. Travel Cost</p><strong>...</strong></div><div class="summary-item"><p>Overall Safety</p><span class="status-badge ${routeData.overall_safety_class}">${routeData.overall_safety_text}</span></div></div></div>`;
+        routeSection.innerHTML = `<div class="trip-report-container"><div class="report-header"><h2><i class="fas fa-check-square"></i> Your Safe Route is Ready!</h2><p>A personalized and safety-conscious itinerary from ${routeData.source} to ${routeData.destination}</p></div><div class="summary-prediction-wrapper">${predictionHTML}${summaryHTML}</div><div class="details-layout"><div id="map"></div><div class="stops-section"><h4><i class="fas fa-star"></i> Recommended Stops</h4><div class="recommended-stops">${stopsHTML}</div></div></div><div class="tip-card" style="margin-top: 25px;"><i class="fas fa-info-circle"></i><p>Enjoy your journey! When travelling through Alleppey Backwaters, Kumarakom, Munnar, always check local news for the latest updates on weather and road conditions.</p></div></div>`;
+        setTimeout(() => { initMapAndRoute(routeData.source, routeData.destination); }, 100);
+    }
+
+    function renderFallbackRoute(source, destination, message) {
+        const routeSection = document.getElementById('generatedRouteSection');
+        const fallbackMessage = message || "We couldn't generate a full safe route. Here is the direct route map.";
+        routeSection.innerHTML = `<div class="trip-report-container"><div class="report-header" style="color: var(--warning-color);"><i class="fas fa-map-signs"></i><h2>Basic Route Map</h2></div><div class="tip-card" style="background-color: #fff3cd; border-color: #ffc107; margin-bottom: 30px;"><i class="fas fa-info-circle" style="color: #856404;"></i><p style="color: #856404;">${fallbackMessage}</p></div><div id="map" style="height: 500px; border-radius: 12px;"></div></div>`;
+        setTimeout(() => { initMapAndRoute(source, destination, true); }, 100);
+    }
+
+    const routeSectionContainer = document.getElementById('generatedRouteSection');
+    routeSectionContainer.addEventListener('click', async (event) => {
+        const favoriteButton = event.target.closest('.favorite-btn');
+        if (!favoriteButton) return; 
+        const destId = parseInt(favoriteButton.dataset.id, 10);
+        const isFavorited = favoriteButton.classList.contains('favorited');
+        const url = isFavorited ? `/api/favorites/remove/${destId}` : `/api/favorites/add/${destId}`;
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            const result = await response.json();
+            if (result.success) {
+                favoriteButton.classList.toggle('favorited');
+                favoriteButton.classList.toggle('not-favorited');
+                favoriteButton.title = favoriteButton.classList.contains('favorited') ? 'Remove from Favorites' : 'Add to Favorites';
+                if (favoriteButton.classList.contains('favorited')) { favoriteIds.add(destId); } else { favoriteIds.delete(destId); }
+            } else { alert(result.message || 'An error occurred.'); }
+        } catch (error) {
+            console.error('Favorite toggle error:', error);
+            alert('Could not update favorite status. Please try again.');
+        }
+    });
+});
+</script>
+{% endblock %}

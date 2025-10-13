@@ -25,17 +25,16 @@
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            /* display: flex;  This is no longer strictly necessary but doesn't hurt */
             min-height: 100vh;
             background-color: var(--light-bg);
             color: var(--dark-text);
         }
         .sidebar { 
-            position: fixed; /* MODIFIED: Fixes the sidebar to the viewport */
-            top: 0;          /* MODIFIED: Aligns to the top */
-            left: 0;         /* MODIFIED: Aligns to the left */
-            height: 100vh;   /* MODIFIED: Makes it full height */
-            z-index: 100;    /* MODIFIED: Ensures it's on top */
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
             width: var(--sidebar-width); 
             background-color: var(--white); 
             box-shadow: var(--shadow); 
@@ -75,13 +74,11 @@
         .logout-link { display: flex; align-items: center; color: var(--primary-color); text-decoration: none; font-weight: 500; }
         .logout-link:hover { color: #0056b3; }
         .logout-link i { margin-right: 15px; width: 20px; text-align: center; }
-        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
-        
         .main-content { 
             flex-grow: 1; 
             padding: 30px; 
             overflow-y: auto; 
-            margin-left: var(--sidebar-width); /* MODIFIED: Prevents content from being hidden by the fixed sidebar */
+            margin-left: var(--sidebar-width);
         }
 
         /* ### START: AI CHATBOT STYLES ### */
@@ -111,7 +108,8 @@
                 <ul>
                     <li><a href="{{ url_for('views.dashboard') }}" class="{% if active_page == 'dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('views.search') }}" class="{% if active_page == 'search' %}active{% endif %}"><i class="fas fa-search"></i> Search Destination</a></li>
-                    <li><a href="{{ url_for('views.previous') }}" class="{% if active_page == 'previous' %}active{% endif %}"><i class="fas fa-history"></i> Previous Routes</a></li>
+                    <!-- FIX: Corrected the link to point to 'views.previous_routes' -->
+                    <li><a href="{{ url_for('views.previous_routes') }}" class="{% if active_page == 'previous_routes' %}active{% endif %}"><i class="fas fa-history"></i> Previous Routes</a></li>
                     <li><a href="{{ url_for('views.favorites') }}" class="{% if active_page == 'favorite' %}active{% endif %}"><i class="fas fa-heart"></i> Favorite</a></li>
                 </ul>
             </nav>

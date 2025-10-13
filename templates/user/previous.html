@@ -4,46 +4,122 @@
 
 {% block extra_styles %}
 <style>
-    /* Re-using dashboard styles for consistency */
-    .route-layout { display: flex; gap: 30px; flex-wrap: wrap; }
-    .map-container { height: 400px; flex: 1; min-width: 300px; border-radius: 8px; border: 1px solid var(--border-color); z-index: 1; }
-    #route-details { flex: 1; min-width: 300px; }
-    .leaflet-routing-container { display: none !important; }
-    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-right: 10px; }
-    .status-badge.safe, .status-badge.status-safe { background-color: var(--success-color); color: var(--white); }
-    .status-badge.caution { background-color: var(--warning-color); color: var(--dark-text); }
-    .status-badge.unsafe { background-color: var(--danger-color); color: var(--white); }
-    .generated-route-section { background-color: var(--white); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: var(--shadow); }
-    .route-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; color: var(--dark-text); font-size: 1.5rem; font-weight: 600; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-    .route-header i { color: var(--primary-color); margin-right: 10px;}
-    .route-header small { font-size: 1rem; color: var(--secondary-color); font-weight: 500;}
-    .route-card { background-color: var(--light-bg); border-radius: 10px; padding: 20px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-    .route-card h4 { font-size: 1.2rem; font-weight: 600; margin-top: 0; margin-bottom: 15px; color: var(--dark-text); }
-    .route-summary-details p { margin: 5px 0; font-size: 0.95rem; }
-    .route-summary-details strong { color: var(--dark-text); }
-    .tip-card { background-color: #d4edda; border-left: 5px solid #28a745; border-radius: 8px; padding: 15px 20px; display: flex; align-items: flex-start; margin-top: 25px; }
-    .tip-card i { color: #28a745; font-size: 1.5rem; margin-right: 15px; }
-    .tip-card p { font-size: 0.95rem; color: #155724; margin: 0; }
-    .stop-card { flex: 1; min-width: 250px; background-color: #f8f9fa; border-radius: 10px; padding: 15px; border: 1px solid #e9ecef; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
-    .stop-card h5 { font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 5px; color: var(--dark-text); }
-    .stop-card p { font-size: 0.9rem; margin-bottom: 5px; }
-    .stop-card .status-badge { margin-top: 10px; margin-right: 0; }
-    .recommended-stops { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
-    .favorite-btn { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.7); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1rem; transition: transform 0.2s, color 0.2s; z-index: 10; }
-    .favorite-btn:hover { transform: scale(1.1); }
-    .favorite-btn.favorited { color: #ff4d4d; }
-    .favorite-btn.not-favorited { color: #ccc; }
-    .favorite-btn i { pointer-events: none; }
-    .no-route-message { text-align: center; font-size: 1.2rem; color: var(--secondary-color); padding: 50px; background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); }
+    .page-header { text-align: center; margin-bottom: 30px; }
+    .page-header h2 { margin-top: 0; color: var(--dark-text); font-size: 2rem; }
     
-    /* --- START: NEW STYLES FOR DELETE BUTTON --- */
+    .history-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .history-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 25px;
+        border-left: 5px solid var(--primary-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative; /* Needed for the delete button */
+    }
+    .history-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.07);
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap; /* For smaller screens */
+        gap: 10px;
+    }
+    
+    .route-path h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--dark-text);
+    }
+    .route-path .fas { color: var(--primary-color); }
+
+    .route-date {
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        font-weight: 500;
+    }
+    
+    .history-body h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-text);
+        margin-bottom: 15px;
+    }
+
+    /* Styles for user preferences */
+    .route-preferences {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+    }
+    .route-preferences .preference-item {
+        color: var(--secondary-color);
+    }
+    .route-preferences .preference-item strong {
+        color: var(--dark-text);
+        margin-left: 8px;
+    }
+
+    .stops-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .stop-item {
+        background-color: var(--light-bg);
+        border: 1px solid var(--border-color);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+    .status-badge.safe { background-color: #d1e7dd; color: #0f5132; }
+    .status-badge.caution { background-color: #fff3cd; color: #664d03; }
+    .status-badge.unsafe { background-color: #f8d7da; color: #842029; }
+
+    .empty-state { text-align: center; padding: 50px; background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); }
+    .empty-state i { font-size: 3rem; color: #ccc; margin-bottom: 20px; }
+    .empty-state h3 { color: var(--dark-text); }
+    .empty-state p { color: var(--secondary-color); }
+    .empty-state a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+
+    /* Delete Button Styles */
     .delete-route-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
         background: none;
         border: none;
         color: var(--secondary-color);
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         cursor: pointer;
-        padding: 5px 10px;
+        padding: 8px;
+        line-height: 1;
         border-radius: 50%;
         transition: color 0.2s ease, background-color 0.2s ease;
     }
@@ -51,166 +127,126 @@
         color: var(--danger-color);
         background-color: #fbe9e9;
     }
-    .delete-route-btn i {
-        pointer-events: none; /* Ensures the click event is on the button */
-    }
-    /* --- END: NEW STYLES FOR DELETE BUTTON --- */
+    .delete-route-btn i { pointer-events: none; }
 </style>
 {% endblock %}
 
 {% block user_content %}
-    <h1>Your 5 Most Recent Routes</h1>
-    <div id="previous-routes-container">
-        <!-- Route cards will be injected here by JavaScript -->
+<div class="page-header">
+    <h2><i class="fas fa-history"></i> My Previous Routes</h2>
+</div>
+
+{% if histories %}
+    <div class="history-grid" id="historyGrid">
+        {% for history in histories %}
+            <div class="history-card" data-history-id="{{ history.id }}">
+                <!-- === THE DELETE BUTTON === -->
+                <button class="delete-route-btn" title="Delete this route history">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+
+                <div class="history-header">
+                    <div class="route-path">
+                        <h3>
+                            <span>{{ history.source }}</span>
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            <span>{{ history.destination }}</span>
+                        </h3>
+                    </div>
+                    <span class="route-date">
+                        Generated on {{ history.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                    </span>
+                </div>
+                <div class="history-body">
+                    <!-- === DISPLAY BUDGET AND INTEREST === -->
+                    <div class="route-preferences">
+                        <div class="preference-item">
+                            <i class="fas fa-lightbulb"></i> Interest: 
+                            <strong>{{ history.interest | capitalize }}</strong>
+                        </div>
+                        <div class="preference-item">
+                            <i class="fas fa-rupee-sign"></i> Budget:
+                            {% set budget_val = history.budget|int(-1) %}
+                            <strong>
+                                {% if budget_val > 0 %}
+                                    Under ₹{{ "{:,.0f}".format(budget_val) }}
+                                {% else %}
+                                    {{ history.budget }}
+                                {% endif %}
+                            </strong>
+                        </div>
+                    </div>
+
+                    {% if history.stops %}
+                        <h4>Recommended Stops:</h4>
+                        <ul class="stops-list">
+                            {% for stop in history.stops %}
+                                <li class="stop-item">
+                                    <span>{{ stop.name }} ({{ stop.district }})</span>
+                                    <span class="status-badge {{ stop.safety_class }}">{{ stop.safety_text }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No specific stops were recommended for this route.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
     </div>
+{% else %}
+    <div class="empty-state">
+        <i class="fas fa-route"></i>
+        <h3>No Route History</h3>
+        <p>You haven't generated any routes yet. Plan your first trip to see your history here!</p>
+        <a href="{{ url_for('views.dashboard') }}">Plan a Trip</a>
+    </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<!-- === JAVASCRIPT FOR THE DELETE BUTTON === -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const favoriteIds = new Set({{ favorite_ids_json | tojson | safe }});
-    const districtCoordinates = {{ districts_coords_json | tojson | safe }};
-    const container = document.getElementById('previous-routes-container');
-    const noRouteMessageHTML = `<div class="no-route-message">You have not generated a route in this session yet.</div>`;
-
-    // Load initial routes
-    let routes = JSON.parse(sessionStorage.getItem('previousRoutes')) || [];
-    renderAllRoutes();
-
-    // --- START: NEW CLICK HANDLER FOR DELETE AND FAVORITE BUTTONS ---
-    container.addEventListener('click', async (event) => {
-        // Handle Favorite Button Clicks
-        const favoriteButton = event.target.closest('.favorite-btn');
-        if (favoriteButton) {
-            handleFavoriteClick(favoriteButton);
-        }
-
-        // Handle Delete Button Clicks
-        const deleteButton = event.target.closest('.delete-route-btn');
-        if (deleteButton) {
-            handleDeleteClick(deleteButton);
-        }
-    });
-    // --- END: NEW CLICK HANDLER ---
-
-    function renderAllRoutes() {
-        container.innerHTML = ''; // Clear the container first
-        if (routes.length > 0) {
-            routes.forEach((routeData, index) => {
-                const routeElement = document.createElement('div');
-                routeElement.className = 'generated-route-section';
-                routeElement.dataset.index = index; // Keep track of the original index
-                routeElement.innerHTML = renderRouteHTML(routeData, index);
-                container.appendChild(routeElement);
-                // Initialize the map for this specific route card
-                initMapAndRoute(routeData.source, routeData.destination, `map-${index}`);
-            });
-        } else {
-            container.innerHTML = noRouteMessageHTML;
-        }
-    }
-
-    async function handleFavoriteClick(button) {
-        const destId = parseInt(button.dataset.id, 10);
-        const isFavorited = button.classList.toggle('favorited');
-        button.classList.toggle('not-favorited', !isFavorited);
-        button.title = isFavorited ? 'Remove from Favorites' : 'Add to Favorites';
-        
-        const url = isFavorited ? `/api/favorites/add/${destId}` : `/api/favorites/remove/${destId}`;
-        try {
-            await fetch(url, { method: 'POST' });
-        } catch (error) {
-            console.error('Favorite toggle error:', error);
-            alert('Could not update favorite status. Please try again.');
-            // Revert the visual change on error
-            button.classList.toggle('favorited');
-            button.classList.toggle('not-favorited');
-        }
-    }
-
-    function handleDeleteClick(button) {
-        const routeCard = button.closest('.generated-route-section');
-        const indexToDelete = parseInt(routeCard.dataset.index, 10);
-
-        // Remove the route from the DOM
-        routeCard.remove();
-
-        // Remove the route from our local 'routes' array
-        routes.splice(indexToDelete, 1);
-        
-        // Update sessionStorage with the modified array
-        sessionStorage.setItem('previousRoutes', JSON.stringify(routes));
-
-        // Re-render everything to update indices and check if empty
-        renderAllRoutes();
-    }
+document.addEventListener('DOMContentLoaded', function () {
+    const historyGrid = document.getElementById('historyGrid');
     
-    function initMapAndRoute(source, destination, mapId) {
-        const mapDiv = document.getElementById(mapId);
-        if (!mapDiv) { console.error(`Map container with id "${mapId}" not found!`); return; }
+    if (historyGrid) {
+        historyGrid.addEventListener('click', async function (event) {
+            // Find the closest delete button to where the user clicked
+            const deleteButton = event.target.closest('.delete-route-btn');
+            if (!deleteButton) return; // Exit if the click was not on a delete button
 
-        const sourceCoords = districtCoordinates[source];
-        const destCoords = districtCoordinates[destination];
-        if (!sourceCoords || !destCoords) { 
-            mapDiv.innerHTML = "<p>Could not find coordinates for districts.</p>"; 
-            return; 
-        }
-        
-        const leafletMap = L.map(mapId).setView([10.8505, 76.2711], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(leafletMap);
-        
-        L.Routing.control({
-            waypoints: [ L.latLng(sourceCoords.lat, sourceCoords.lng), L.latLng(destCoords.lat, destCoords.lng) ],
-            routeWhileDragging: false, addWaypoints: false, draggableWaypoints: false,
-            lineOptions: { styles: [{ color: 'var(--primary-color)', opacity: 0.8, weight: 6 }] }
-        }).addTo(leafletMap);
-    }
+            const card = deleteButton.closest('.history-card');
+            const historyId = card.dataset.historyId;
 
-    function renderRouteHTML(routeData, index) {
-        const stopsHTML = routeData.stops.map(stop => {
-            const isFavorited = favoriteIds.has(stop.id);
-            const favClass = isFavorited ? 'favorited' : 'not-favorited';
-            const favTitle = isFavorited ? 'Remove from Favorites' : 'Add to Favorites';
-            return `
-            <div class="stop-card">
-                <button class="favorite-btn ${favClass}" data-id="${stop.id}" title="${favTitle}"><i class="fas fa-heart"></i></button>
-                <h5>${stop.name}</h5>
-                <p>${stop.type}</p>
-                <p>Est. Budget: ₹${stop.budget ? stop.budget.toLocaleString() : 'N/A'}</p>
-                <span class="status-badge ${stop.safety_class}">${stop.safety_text}</span>
-            </div>`;
-        }).join('');
+            if (confirm('Are you sure you want to delete this route history?')) {
+                try {
+                    const response = await fetch(`/api/delete-route-history/${historyId}`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
 
-        // --- START: NEW DELETE BUTTON ADDED TO THE HEADER ---
-        return `
-            <div class="route-header">
-                <div style="display: flex; align-items: center;"><i class="fas fa-route"></i>Route ${index + 1}</div>
-                <small>${routeData.source} to ${routeData.destination}</small>
-                <button class="delete-route-btn" title="Delete this route">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-            <div class="route-layout">
-                <div id="map-${index}" class="map-container"></div>
-                <div id="route-details">
-                    <div class="route-card">
-                        <h4>Route Summary</h4>
-                        <div class="route-summary-details">
-                            <p><strong>${routeData.source}</strong> <i class="fas fa-arrow-right"></i> <strong>${routeData.destination}</strong></p>
-                            <p>Interest: <strong>${routeData.interest}</strong></p>
-                            <span class="status-badge ${routeData.overall_safety_class}">Overall Safety: ${routeData.overall_safety_text}</span>
-                        </div>
-                    </div>
-                    <div class="route-card">
-                        <h4>Recommended Stop</h4>
-                        <div class="recommended-stops">${stopsHTML}</div>
-                    </div>
-                    <div class="tip-card"><i class="fas fa-info-circle"></i><p>${routeData.tip}</p></div>
-                </div>
-            </div>`;
-        // --- END: NEW DELETE BUTTON ---
+                    if (result.success) {
+                        // Animate and remove the card from the page
+                        card.style.transition = 'opacity 0.5s, transform 0.5s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateX(-50px)';
+                        setTimeout(() => {
+                            card.remove();
+                            // If this was the last card, reload to show the "No History" message
+                            if (historyGrid.children.length === 0) {
+                                window.location.reload(); 
+                            }
+                        }, 500);
+                    } else {
+                        alert(result.message || 'Failed to delete route history.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            }
+        });
     }
 });
 </script>

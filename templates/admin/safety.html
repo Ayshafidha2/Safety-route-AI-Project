@@ -91,11 +91,21 @@
         const MAX_RISK_SCORE = 75;
         const PLACE_CHART_LIMIT = 15; // Limit the number of places shown in the chart
 
-        if (!allData || allData.length === 0) { /* Error handling... */ return; }
+        if (!allData || allData.length === 0) { 
+            container.innerHTML = '<p style="text-align:center; color:#718096;">No safety data available to analyze.</p>';
+            document.getElementById('bar-chart-section').style.display = 'none';
+            return;
+        }
+        
         const twoYearsAgo = new Date();
         twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
         const recentData = allData.filter(item => item.date && new Date(item.date) >= twoYearsAgo);
-        if (recentData.length === 0) { /* Error handling... */ return; }
+        
+        if (recentData.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#718096;">No recent safety events (last 2 years) found to analyze.</p>';
+            document.getElementById('bar-chart-section').style.display = 'none';
+            return;
+        }
         
         const districtScores = recentData.reduce((acc, item) => {
             const district = item.district; if (!district) return acc;
@@ -105,18 +115,54 @@
             if ((parseInt(item.disease_cases, 10) || 0) > 0) { acc[district].score += 3; acc[district].diseaseIncidents += 1; eventOccurred = true; }
             if ((parseFloat(item.temperature_c) || 0) > 34) { acc[district].score += 1; acc[district].weatherAlerts += 1; eventOccurred = true; }
             if ((parseFloat(item.rainfall_mm) || 0) > 60) { acc[district].score += 2; acc[district].weatherAlerts += 1; eventOccurred = true; }
-            if (eventOccurred && item.date && (!acc[district].latestDate || item.date > acc[district].latestDate)) { acc[district].latestDate = item.date; }
+            if (eventOccurred && item.date && (!acc[district].latestDate || new Date(item.date) > new Date(acc[district].latestDate))) { acc[district].latestDate = item.date; }
             return acc;
         }, {});
+
         Object.keys(districtScores).sort().forEach(districtName => districtFilter.add(new Option(districtName, districtName)));
+        
         function getSafetyLevel(rawScore) {
             if (rawScore > MAX_RISK_SCORE * 0.60) return { level: 'High Risk', cssClass: 'status-high-risk' };
             if (rawScore > MAX_RISK_SCORE * 0.25) return { level: 'Moderate Risk', cssClass: 'status-moderate-risk' };
             return { level: 'Low Risk', cssClass: 'status-low-risk' };
         }
+        
         function formatDate(dateString) { if (!dateString) return ''; return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
-        function renderAllDistrictsView() { /* Unchanged */ container.innerHTML = ''; Object.keys(districtScores).sort().forEach(districtName => { const data = districtScores[districtName]; const safetyInfo = getSafetyLevel(data.score); const displayScore = Math.min(Math.round((data.score / MAX_RISK_SCORE) * 100), 100); const card = document.createElement('div'); card.className = `safety-card ${safetyInfo.cssClass}`; const formattedDate = formatDate(data.latestDate); const dateHtml = formattedDate ? `<p class="last-event-date"><i class="fas fa-calendar-alt"></i> Last Event: ${formattedDate}</p>` : ''; card.innerHTML = `<div class="card-header"><h3>${districtName}</h3><span class="status-badge">${safetyInfo.level}</span></div><div class="card-body"><div class="score" style="--score-percent: ${displayScore}"><div><strong>${displayScore}</strong><span>/ 100</span></div></div><ul class="breakdown"><li><span><i class="fas fa-exclamation-triangle"></i> Disaster Events</span> <strong>${data.disasterCount}</strong></li><li><span><i class="fas fa-notes-medical"></i> Disease Incidents</span> <strong>${data.diseaseIncidents}</strong></li><li><span><i class="fas fa-cloud-sun-rain"></i> Weather Alerts</span> <strong>${data.weatherAlerts}</strong></li></ul>${dateHtml}</div>`; container.appendChild(card); }); }
-        function renderPlaceLevelView(districtName) { /* Unchanged */ container.innerHTML = `<h2 class="detail-title">Safety Levels for Places in ${districtName}</h2>`; const placeData = recentData.filter(item => item.district === districtName); const placeScores = placeData.reduce((acc, item) => { const place = item.place; if (!place) return acc; if (!acc[place]) { acc[place] = { score: 0, disasterCount: 0, diseaseIncidents: 0, weatherAlerts: 0, latestDate: null }; } let eventOccurred = false; if (item.disaster_event && item.disaster_event.toLowerCase() !== 'none' && item.disaster_event.trim() !== '') { acc[place].score += 5; acc[place].disasterCount += 1; eventOccurred = true; } if ((parseInt(item.disease_cases, 10) || 0) > 0) { acc[place].score += 3; acc[place].diseaseIncidents += 1; eventOccurred = true; } if ((parseFloat(item.temperature_c) || 0) > 34) { acc[place].score += 1; acc[place].weatherAlerts += 1; eventOccurred = true; } if ((parseFloat(item.rainfall_mm) || 0) > 60) { acc[place].score += 2; acc[place].weatherAlerts += 1; eventOccurred = true; } if (eventOccurred && item.date && (!acc[place].latestDate || item.date > acc[place].latestDate)) { acc[place].latestDate = item.date; } return acc; }, {}); if (Object.keys(placeScores).length === 0) { container.innerHTML += '<p style="text-align:center; color:#718096; grid-column: 1 / -1;">No recent events found for any places in this district.</p>'; return; } Object.keys(placeScores).sort().forEach(placeName => { const data = placeScores[placeName]; const safetyInfo = getSafetyLevel(data.score); const displayScore = Math.min(Math.round((data.score / MAX_RISK_SCORE) * 100), 100); const card = document.createElement('div'); card.className = `safety-card ${safetyInfo.cssClass}`; const formattedDate = formatDate(data.latestDate); const dateHtml = formattedDate ? `<p class="last-event-date"><i class="fas fa-calendar-alt"></i> Last Event: ${formattedDate}</p>` : ''; card.innerHTML = `<div class="card-header"><h3>${placeName}</h3><span class="status-badge">${safetyInfo.level}</span></div><div class="card-body"><div class="score" style="--score-percent: ${displayScore}"><div><strong>${displayScore}</strong><span>/ 100</span></div></div><ul class="breakdown"><li><span><i class="fas fa-exclamation-triangle"></i> Disaster Events</span> <strong>${data.disasterCount}</strong></li><li><span><i class="fas fa-notes-medical"></i> Disease Incidents</span> <strong>${data.diseaseIncidents}</strong></li><li><span><i class="fas fa-cloud-sun-rain"></i> Weather Alerts</span> <strong>${data.weatherAlerts}</strong></li></ul>${dateHtml}</div>`; container.appendChild(card); }); }
+        
+        function renderAllDistrictsView() {
+            container.innerHTML = '';
+            Object.keys(districtScores).sort().forEach(districtName => {
+                const data = districtScores[districtName];
+                const safetyInfo = getSafetyLevel(data.score);
+                const displayScore = Math.min(Math.round((data.score / MAX_RISK_SCORE) * 100), 100);
+                const card = document.createElement('div');
+                card.className = `safety-card ${safetyInfo.cssClass}`;
+                const formattedDate = formatDate(data.latestDate);
+                const dateHtml = formattedDate ? `<p class="last-event-date"><i class="fas fa-calendar-alt"></i> Last Event: ${formattedDate}</p>` : '';
+                card.innerHTML = `<div class="card-header"><h3>${districtName}</h3><span class="status-badge">${safetyInfo.level}</span></div><div class="card-body"><div class="score" style="--score-percent: ${displayScore}"><div><strong>${displayScore}</strong><span>/ 100</span></div></div><ul class="breakdown"><li><span><i class="fas fa-exclamation-triangle"></i> Disaster Events</span> <strong>${data.disasterCount}</strong></li><li><span><i class="fas fa-notes-medical"></i> Disease Incidents</span> <strong>${data.diseaseIncidents}</strong></li><li><span><i class="fas fa-cloud-sun-rain"></i> Weather Alerts</span> <strong>${data.weatherAlerts}</strong></li></ul>${dateHtml}</div>`;
+                container.appendChild(card);
+            });
+        }
+        
+        // --- CORRECTED: This function now accepts a 'placeScores' object to avoid recalculating.
+        function renderPlaceLevelView(districtName, placeScores) {
+            container.innerHTML = `<h2 class="detail-title">Safety Levels for Places in ${districtName}</h2>`;
+            if (Object.keys(placeScores).length === 0) {
+                container.innerHTML += '<p style="text-align:center; color:#718096; grid-column: 1 / -1;">No recent events found for any places in this district.</p>';
+                return;
+            }
+            Object.keys(placeScores).sort().forEach(placeName => {
+                const data = placeScores[placeName];
+                const safetyInfo = getSafetyLevel(data.score);
+                const displayScore = Math.min(Math.round((data.score / MAX_RISK_SCORE) * 100), 100);
+                const card = document.createElement('div');
+                card.className = `safety-card ${safetyInfo.cssClass}`;
+                const formattedDate = formatDate(data.latestDate);
+                const dateHtml = formattedDate ? `<p class="last-event-date"><i class="fas fa-calendar-alt"></i> Last Event: ${formattedDate}</p>` : '';
+                card.innerHTML = `<div class="card-header"><h3>${placeName}</h3><span class="status-badge">${safetyInfo.level}</span></div><div class="card-body"><div class="score" style="--score-percent: ${displayScore}"><div><strong>${displayScore}</strong><span>/ 100</span></div></div><ul class="breakdown"><li><span><i class="fas fa-exclamation-triangle"></i> Disaster Events</span> <strong>${data.disasterCount}</strong></li><li><span><i class="fas fa-notes-medical"></i> Disease Incidents</span> <strong>${data.diseaseIncidents}</strong></li><li><span><i class="fas fa-cloud-sun-rain"></i> Weather Alerts</span> <strong>${data.weatherAlerts}</strong></li></ul>${dateHtml}</div>`;
+                container.appendChild(card);
+            });
+        }
         
         function renderSafetyBarChart(title, labels, data) {
             if (safetyChart) safetyChart.destroy();
@@ -135,41 +181,45 @@
                 const chartData = sortedDistricts.map(d => Math.min(Math.round((districtScores[d].score / MAX_RISK_SCORE) * 100), 100));
                 renderSafetyBarChart('Overall District Risk Score Comparison', sortedDistricts, chartData);
             } else {
-                renderPlaceLevelView(selectedDistrict);
-                
-                // --- FIX: Logic to show top N riskiest places ---
+                // --- CORRECTED: Calculate place scores once and reuse them. ---
                 const placeData = recentData.filter(item => item.district === selectedDistrict);
                 const placeScores = placeData.reduce((acc, item) => {
-                    const place = item.place; if (!place) return acc; if (!acc[place]) acc[place] = { rawScore: 0 };
-                    if (item.disaster_event && item.disaster_event.toLowerCase() !== 'none' && item.disaster_event.trim() !== '') acc[place].rawScore += 5;
-                    if ((parseInt(item.disease_cases, 10) || 0) > 0) acc[place].rawScore += 3;
-                    if ((parseFloat(item.temperature_c) || 0) > 34) acc[place].rawScore += 1;
-                    if ((parseFloat(item.rainfall_mm) || 0) > 60) acc[place].rawScore += 2;
+                    const place = item.place; if (!place) return acc;
+                    if (!acc[place]) { acc[place] = { score: 0, disasterCount: 0, diseaseIncidents: 0, weatherAlerts: 0, latestDate: null }; }
+                    let eventOccurred = false;
+                    if (item.disaster_event && item.disaster_event.toLowerCase() !== 'none' && item.disaster_event.trim() !== '') { acc[place].score += 5; acc[place].disasterCount += 1; eventOccurred = true; }
+                    if ((parseInt(item.disease_cases, 10) || 0) > 0) { acc[place].score += 3; acc[place].diseaseIncidents += 1; eventOccurred = true; }
+                    if ((parseFloat(item.temperature_c) || 0) > 34) { acc[place].score += 1; acc[place].weatherAlerts += 1; eventOccurred = true; }
+                    if ((parseFloat(item.rainfall_mm) || 0) > 60) { acc[place].score += 2; acc[place].weatherAlerts += 1; eventOccurred = true; }
+                    if (eventOccurred && item.date && (!acc[place].latestDate || new Date(item.date) > new Date(acc[place].latestDate))) { acc[place].latestDate = item.date; }
                     return acc;
                 }, {});
 
-                // Convert to array, sort by score descending, and prepare for chart
+                // Pass the calculated scores to the view rendering function.
+                renderPlaceLevelView(selectedDistrict, placeScores);
+                
+                // Use the same scores to prepare data for the chart.
                 const sortedPlaces = Object.entries(placeScores)
-                    .map(([name, data]) => ({ name, ...data }))
-                    .sort((a, b) => b.rawScore - a.rawScore);
+                    .map(([name, data]) => ({ name, score: data.score }))
+                    .sort((a, b) => b.score - a.score);
 
                 let chartLabels, chartData;
 
                 if (sortedPlaces.length > PLACE_CHART_LIMIT) {
                     const topPlaces = sortedPlaces.slice(0, PLACE_CHART_LIMIT);
                     const otherPlaces = sortedPlaces.slice(PLACE_CHART_LIMIT);
-                    const otherPlacesAvgScore = otherPlaces.reduce((sum, p) => sum + p.rawScore, 0) / otherPlaces.length;
+                    const otherPlacesAvgScore = otherPlaces.length > 0 ? otherPlaces.reduce((sum, p) => sum + p.score, 0) / otherPlaces.length : 0;
 
                     chartLabels = topPlaces.map(p => p.name);
-                    chartLabels.push('Other Places (Avg)');
+                    chartLabels.push(`Other ${otherPlaces.length} Places (Avg)`);
 
-                    chartData = topPlaces.map(p => Math.min(Math.round((p.rawScore / MAX_RISK_SCORE) * 100), 100));
+                    chartData = topPlaces.map(p => Math.min(Math.round((p.score / MAX_RISK_SCORE) * 100), 100));
                     chartData.push(Math.min(Math.round((otherPlacesAvgScore / MAX_RISK_SCORE) * 100), 100));
                 } else {
                     chartLabels = sortedPlaces.map(p => p.name);
-                    chartData = sortedPlaces.map(p => Math.min(Math.round((p.rawScore / MAX_RISK_SCORE) * 100), 100));
+                    chartData = sortedPlaces.map(p => Math.min(Math.round((p.score / MAX_RISK_SCORE) * 100), 100));
                 }
-
+                
                 renderSafetyBarChart(`Top Risk Scores in ${selectedDistrict}`, chartLabels, chartData);
             }
         });

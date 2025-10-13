@@ -4,11 +4,10 @@
 
 {% block extra_styles %}
 <style>
-    /* Re-using styles from search.html for consistency */
     .page-header { text-align: center; margin-bottom: 30px; }
     .page-header h2 { margin-top: 0; color: var(--dark-text); font-size: 2rem; }
     .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-    .dest-card { background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; position: relative; cursor: pointer; } /* Added cursor:pointer */
+    .dest-card { background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; position: relative; }
     .dest-card-img { width: 100%; height: 180px; object-fit: cover; }
     .dest-card-content { padding: 20px; flex-grow: 1; }
     .dest-card h3 { margin-top: 0; font-size: 1.25rem; }
@@ -20,24 +19,10 @@
     .empty-state p { color: var(--secondary-color); }
     .empty-state a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
     
-    /* Favorite button style */
     .favorite-btn { position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.8); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #ff4d4d; font-size: 1.2rem; transition: transform 0.2s, color 0.2s; z-index: 10; }
     .favorite-btn:hover { transform: scale(1.1); }
     .favorite-btn i { pointer-events: none; }
-
-    /* --- ADDED: Modal styles from search.html --- */
-    .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center; }
-    .modal-content { background-color: var(--white); margin: auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 5px 20px rgba(0,0,0,0.25); animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
-    .modal-header h2 { margin: 0; font-size: 1.75rem; color: var(--dark-text); }
-    .close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; background: none; border: none; }
-    .close-btn:hover, .close-btn:focus { color: #333; }
-    .modal-body .detail-item { margin-bottom: 15px; }
-    .modal-body .detail-item strong { display: block; color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 4px; }
-    .modal-body .detail-item p { margin: 0; font-size: 1rem; line-height: 1.6; }
-    #modal-image { width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
-    /* Safety badge is missing, let's add it for the modal */
+    
     .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
     .status-badge.safe { background-color: #d4edda; color: #155724; }
     .status-badge.caution { background-color: #fff3cd; color: #856404; }
@@ -53,18 +38,7 @@
 {% if destinations %}
     <div class="results-grid" id="favoritesGrid">
         {% for dest in destinations %}
-            <!-- MODIFIED: Added all necessary data-* attributes to the card -->
-            <div class="dest-card" id="dest-card-{{ dest.Destination_id }}"
-                 data-id="{{ dest.Destination_id }}"
-                 data-place="{{ dest.Place }}"
-                 data-name="{{ dest.Name }}"
-                 data-type="{{ dest.Type|capitalize }}"
-                 data-description="{{ dest.Description }}"
-                 data-budget="{{ dest.budget }}"
-                 data-image_url="{{ dest.image_url }}"
-                 data-safety-text="{{ dest.safety_ratings[0].overall_safety if dest.safety_ratings and dest.safety_ratings[0] else 'Not Rated' }}"
-                 data-safety-class="{{ {'Low Risk': 'safe', 'Moderate Risk': 'caution', 'High Risk': 'unsafe'}.get(dest.safety_ratings[0].overall_safety if dest.safety_ratings and dest.safety_ratings[0], 'caution') }}"
-                 role="button" tabindex="0">
+            <div class="dest-card" id="dest-card-{{ dest.Destination_id }}">
 
                 <button class="favorite-btn" data-id="{{ dest.Destination_id }}" title="Remove from Favorites">
                     <i class="fas fa-heart"></i>
@@ -80,14 +54,8 @@
                 </div>
                 <div class="dest-card-footer">
                     <span>Budget: ₹{{ "{:,.0f}".format(dest.budget|int) if dest.budget else 'N/A' }}</span>
-                    <!-- ADDED: Safety status to the footer for consistency -->
-                    {% if dest.safety_ratings and dest.safety_ratings[0] %}
-                        {% set rating = dest.safety_ratings[0] %}
-                        {% set status_map = {'Low Risk': 'safe', 'Moderate Risk': 'caution', 'High Risk': 'unsafe'} %}
-                        <span class="status-badge {{ status_map.get(rating.overall_safety, 'caution') }}">{{ rating.overall_safety }}</span>
-                    {% else %}
-                        <span class="status-badge caution">Not Rated</span>
-                    {% endif %}
+                    <!-- MODIFIED: Use the consistent safety_info property -->
+                    <span class="status-badge {{ dest.safety_info.class }}">{{ dest.safety_info.text }}</span>
                 </div>
             </div>
         {% endfor %}
@@ -101,113 +69,46 @@
     </div>
 {% endif %}
 
-<!-- ADDED: Modal HTML from search.html -->
-<div id="destinationModal" class="modal" role="dialog" aria-modal="true">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-place">Destination Name</h2>
-            <button class="close-btn" id="closeModalBtn" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <img src="" alt="Destination Image" id="modal-image" style="display: none;">
-
-            <div class="detail-item"><strong>Location</strong><p id="modal-location"></p></div>
-            <div class="detail-item"><strong>Description</strong><p id="modal-description"></p></div>
-            <div class="detail-item"><strong>Estimated Budget</strong><p id="modal-budget"></p></div>
-            <div class="detail-item"><strong>Safety Status</strong><p><span class="status-badge" id="modal-safety-badge"></span></p></div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const favoritesGrid = document.getElementById('favoritesGrid');
-    const modal = document.getElementById('destinationModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-
-    // --- ADDED: Modal open/close logic from search.html ---
-    const openModal = (card) => {
-        const data = card.dataset;
-        document.getElementById('modal-place').textContent = data.place;
-        document.getElementById('modal-location').textContent = `${data.name} • ${data.type}`;
-        document.getElementById('modal-description').textContent = data.description;
-        const budget = data.budget && !isNaN(data.budget) ? `₹${parseInt(data.budget).toLocaleString('en-IN')}` : 'N/A';
-        document.getElementById('modal-budget').textContent = budget;
-        
-        const safetyBadge = document.getElementById('modal-safety-badge');
-        safetyBadge.textContent = data.safetyText;
-        safetyBadge.className = `status-badge ${data.safetyClass}`;
-        
-        const modalImage = document.getElementById('modal-image');
-        if (data.image_url && data.image_url !== 'None' && data.image_url !== '') {
-            modalImage.src = data.image_url;
-            modalImage.style.display = 'block';
-        } else {
-            modalImage.style.display = 'none';
-        }
-
-        modal.style.display = 'flex';
-    };
-
-    const closeModal = () => {
-        modal.style.display = 'none';
-    };
-
+    
     if (favoritesGrid) {
         favoritesGrid.addEventListener('click', async function (event) {
             const button = event.target.closest('.favorite-btn');
-            const card = event.target.closest('.dest-card');
+            if (!button) return;
 
-            if (button) {
-                // --- Handle favorite button click ---
-                event.stopPropagation(); // Stop the event from bubbling up to the card
-                const destId = button.dataset.id;
-                
-                try {
-                    const response = await fetch(`/api/favorites/remove/${destId}`, { method: 'POST' });
-                    const result = await response.json();
+            event.stopPropagation();
+            const destId = button.dataset.id;
+            
+            try {
+                const response = await fetch(`/api/favorites/remove/${destId}`, { method: 'POST' });
+                const result = await response.json();
 
-                    if (result.success) {
-                        const cardToRemove = document.getElementById(`dest-card-${destId}`);
-                        if (cardToRemove) {
-                            cardToRemove.style.transition = 'opacity 0.5s, transform 0.5s';
-                            cardToRemove.style.opacity = '0';
-                            cardToRemove.style.transform = 'scale(0.95)';
-                            setTimeout(() => {
-                                cardToRemove.remove();
-                                if (favoritesGrid.children.length === 0) {
-                                    window.location.reload(); // Reload to show empty state message
-                                }
-                            }, 500);
-                        }
-                    } else {
-                        alert(result.message || 'Could not remove from favorites.');
+                if (result.success) {
+                    const cardToRemove = document.getElementById(`dest-card-${destId}`);
+                    if (cardToRemove) {
+                        cardToRemove.style.transition = 'opacity 0.5s';
+                        cardToRemove.style.opacity = '0';
+                        setTimeout(() => {
+                            cardToRemove.remove();
+                            if (favoritesGrid.children.length === 0) {
+                                window.location.reload(); // Reload to show empty state message
+                            }
+                        }, 500);
                     }
-                } catch (error) {
-                    console.error('Favorite remove error:', error);
-                    alert('An error occurred. Please try again.');
+                } else {
+                    alert(result.message || 'Could not remove from favorites.');
                 }
-            } else if (card) {
-                // --- Handle card click to open modal ---
-                openModal(card);
+            } catch (error) {
+                console.error('Favorite remove error:', error);
+                alert('An error occurred. Please try again.');
             }
         });
     }
-    
-    // --- ADDED: Listeners to close the modal ---
-    closeModalBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            closeModal();
-        }
-    });
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            closeModal();
-        }
-    });
 });
 </script>
 {% endblock %}

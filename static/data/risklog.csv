@@ -39,7 +39,6 @@ date,district,place,temperature_c,rainfall_mm,humidity_percent,disease_cases,dis
 2023-09-21,Idukki,Thekkady,29.5,0.0,92,2,Flood,"A 'cloud-burst' event led to sudden flash floods in Thekkady, catching residents and tourists by surprise."
 2023-09-22,Pathanamthitta,Gavi,30.5,10.8,85,1,Landslide,"Saturated soil from previous rains gave way, causing a landslide on the forest road to Gavi."
 2023-09-23,Idukki,Thekkady,30.0,18.3,90,1,Flood,Lingering effects of the previous day's rain caused continued flooding in the Periyar river basin near Thekkady.
-2023-10-03,Kottayam,Vagamon,27.7,0.6,87,1,Landslide,"A small-scale landslide occurred in a Vagamon meadow due to soil instability, with no major impact."
 2023-10-17,Pathanamthitta,Perunthenaruvi Waterfalls,25.3,2.1,80,1,Landslide,"A minor rockfall was reported near Perunthenaruvi Waterfalls, a common occurrence during the late monsoon."
 2e023-10-22,Malappuram,Kottakunnu,26.1,0.1,80,3,Cyclone,A cyclone warning led to the evacuation of the Kottakunnu amusement park as a precautionary measure.
 2023-11-06,Malappuram,Nilambur Teak Museum,24.7,0.1,77,3,Heatwave,Unusually warm and dry weather for November was classified as a heatwave in the Nilambur area.

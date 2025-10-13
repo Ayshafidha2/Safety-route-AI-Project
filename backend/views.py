@@ -1,11 +1,14 @@
+# backend/views.py
+
 from flask import render_template, flash, jsonify, request, session, redirect, url_for
 from functools import wraps
 from . import views_bp
-from models import db, Destination, User
-from sqlalchemy import func
+from models import db, Destination, User, RouteHistory
+from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
-from backend.aiservice import calculate_safety_from_csv
+from backend.aiservice import calculate_safety 
 
+# Centralized district data with coordinates for the map
 KERALA_DISTRICTS_COORDS = {
     'Alappuzha': {'lat': 9.4981, 'lng': 76.3388}, 'Ernakulam': {'lat': 9.9816, 'lng': 76.2996},
     'Idukki': {'lat': 9.8392, 'lng': 76.9746}, 'Kannur': {'lat': 11.8745, 'lng': 75.3704},
@@ -16,6 +19,7 @@ KERALA_DISTRICTS_COORDS = {
     'Thrissur': {'lat': 10.5276, 'lng': 76.2144}, 'Wayanad': {'lat': 11.6854, 'lng': 76.1320}
 }
 
+# Decorator to ensure a user is logged in for protected pages
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -27,15 +31,18 @@ def login_required(f):
 
 @views_bp.route('/')
 def landing():
+    """Renders the public landing page."""
     return render_template('landing.html')
 
 @views_bp.route('/dashboard')
 @login_required
 def dashboard():
+    """Renders the main user dashboard."""
     try:
         districts = sorted(list(KERALA_DISTRICTS_COORDS.keys()))
         types_query = db.session.query(Destination.Type).distinct().all()
         interests = [t[0] for t in types_query if t[0] is not None]
+        
         favorite_ids = set()
         if 'user_id' in session:
             user = User.query.get(session['user_id'])
@@ -54,6 +61,7 @@ def dashboard():
 @views_bp.route('/search')
 @login_required
 def search():
+    """Renders the destination search page."""
     try:
         destinations = Destination.query.order_by(Destination.Name, Destination.Place).all()
         favorite_ids = set()
@@ -70,40 +78,40 @@ def search():
                            favorite_ids=favorite_ids,
                            active_page='search')
 
+
 @views_bp.route('/favorites')
 @login_required
 def favorites():
+    """Renders the user's personal favorites page."""
     user = User.query.get(session['user_id'])
     favorite_destinations = user.favorites 
-    for dest in favorite_destinations:
-        dest.safety_info = calculate_safety_from_csv(dest.Name, dest.Place)
+    
+    # The model property `dest.safety_info` now handles the calculation automatically.
+    # No extra logic is needed here.
+
     return render_template('user/favorites.html', 
                            destinations=favorite_destinations, 
                            active_page='favorite')
 
-@views_bp.route('/previous')
+@views_bp.route('/previous-routes')
 @login_required
-def previous():
-    """Renders the page to display the last generated route."""
-    try:
-        favorite_ids = set()
-        if 'user_id' in session:
-            user = User.query.get(session['user_id'])
-            if user: favorite_ids = {dest.Destination_id for dest in user.favorites}
-    except Exception as e:
-        print(f"Error fetching favorites for previous page: {e}")
-        favorite_ids = set()
-
-    return render_template('user/previous.html', 
-                           favorite_ids_json=list(favorite_ids),
-                           districts_coords_json=KERALA_DISTRICTS_COORDS,
-                           active_page='previous')
+def previous_routes():
+    """Renders the user's previously generated routes."""
+    user = User.query.get(session['user_id'])
+    # Query histories and order by most recent first
+    histories = RouteHistory.query.filter_by(user_id=user.User_id).order_by(desc(RouteHistory.created_at)).all()
+    
+    return render_template('user/previous_routes.html', 
+                           histories=histories, 
+                           active_page='previous_routes')
 
 # --- API Endpoints ---
 
 @views_bp.route('/api/search-destinations')
 def api_search_destinations():
+    """API endpoint for live searching destinations."""
     query = request.args.get('q', '', type=str)
+    
     base_query = Destination.query
     if query:
         search_term = f"%{query}%"
@@ -112,19 +120,23 @@ def api_search_destinations():
         ).order_by(Destination.Name).all()
     else:
         search_results = base_query.order_by(Destination.Name).all()
+
     results_list = []
     for dest in search_results:
-        safety_info = calculate_safety_from_csv(dest.Name, dest.Place)
+        # Return the full safety info object from the model property
+        safety_info = dest.safety_info
         results_list.append({
             'id': dest.Destination_id, 'place': dest.Place, 'name': dest.Name,
             'type': dest.Type.capitalize() if dest.Type else 'N/A',
             'description': dest.Description, 'budget': dest.budget, 'image_url': dest.image_url,
             'safety': {'text': safety_info['text'], 'class_name': safety_info['class']}
         })
+
     return jsonify(results_list)
 
 @views_bp.route('/api/increment-search-count/<int:dest_id>', methods=['POST'])
 def increment_search_count(dest_id):
+    """API endpoint to increment the search count for a destination."""
     try:
         destination = Destination.query.get(dest_id)
         if destination:
@@ -136,9 +148,11 @@ def increment_search_count(dest_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Server error.'}), 500
 
+
 @views_bp.route('/api/favorites/add/<int:dest_id>', methods=['POST'])
 @login_required
 def add_favorite(dest_id):
+    """API endpoint to add a destination to the user's favorites."""
     try:
         user = User.query.get(session['user_id'])
         destination = Destination.query.get_or_404(dest_id)
@@ -153,6 +167,7 @@ def add_favorite(dest_id):
 @views_bp.route('/api/favorites/remove/<int:dest_id>', methods=['POST'])
 @login_required
 def remove_favorite(dest_id):
+    """API endpoint to remove a destination from the user's favorites."""
     try:
         user = User.query.get(session['user_id'])
         destination = Destination.query.get_or_404(dest_id)
@@ -164,76 +179,22 @@ def remove_favorite(dest_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
 
-@views_bp.route('/api/generate-route', methods=['POST'])
+# ### ADDED: API endpoint to delete route history ###
+@views_bp.route('/api/delete-route-history/<int:history_id>', methods=['POST'])
 @login_required
-def api_generate_route():
-    """
-    API endpoint to generate a safe route.
-    Uses a tiered query to ensure a real destination is always found if possible.
-    """
+def delete_route_history(history_id):
+    """API endpoint to delete a specific route history item for the logged-in user."""
     try:
-        data = request.get_json()
-        if not all(k in data for k in ['source', 'destination', 'budget', 'interest']):
-            return jsonify({'success': False, 'message': 'Missing required fields.'}), 400
+        # Query for the item, ensuring it belongs to the current user for security
+        history_item = RouteHistory.query.filter_by(id=history_id, user_id=session['user_id']).first()
         
-        source_district = data['source']
-        destination_district = data['destination']
-        interest = data['interest']
+        if not history_item:
+            return jsonify({'success': False, 'message': 'Route history not found or permission denied.'}), 404
+            
+        db.session.delete(history_item)
+        db.session.commit()
         
-        potential_stop = None
-
-        # Attempt 1: Find a stop in the district that matches the user's interest.
-        potential_stop = Destination.query.filter(
-            Destination.Place.ilike(f"%{destination_district}%"),
-            Destination.Type.ilike(f"%{interest}%")
-        ).order_by(func.random()).first()
-
-        # Attempt 2: If the ideal match fails, find ANY stop in that district.
-        if not potential_stop:
-            print(f"INFO: Could not find a '{interest}' spot in '{destination_district}'. Broadening search.")
-            potential_stop = Destination.query.filter(
-                Destination.Place.ilike(f"%{destination_district}%")
-            ).order_by(func.random()).first()
-
-        stops = []
-        if potential_stop:
-            # If we found a real stop from either Attempt 1 or 2, use it.
-            safety_info = calculate_safety_from_csv(potential_stop.Name, potential_stop.Place)
-            stops.append({
-                "id": potential_stop.Destination_id,
-                "name": potential_stop.Name,
-                "type": potential_stop.Type.capitalize(),
-                "budget": potential_stop.budget,
-                "safety_text": safety_info['text'],
-                "safety_class": safety_info['class']
-            })
-        else:
-            # This is the FINAL fallback, only if the district is completely empty in the DB.
-            print(f"WARNING: No destinations found for district '{destination_district}' at all. Using generic fallback.")
-            stops.append({
-                "id": 9999,
-                "name": f"General Exploration in {destination_district}",
-                "type": interest.capitalize(),
-                "budget": 2500,
-                "safety_text": "Safe",
-                "safety_class": "safe"
-            })
-        
-        overall_safety_text = "Good to Go"
-        overall_safety_class = "status-safe"
-        tip = f"For your trip from {source_district} to {destination_district}, enjoy the recommended stops and always check local advisories. Have a safe journey!"
-        
-        route_data = {
-            "source": source_district,
-            "destination": destination_district,
-            "interest": interest.capitalize(),
-            "stops": stops,
-            "overall_safety_text": overall_safety_text,
-            "overall_safety_class": overall_safety_class,
-            "tip": tip
-        }
-        return jsonify({'success': True, 'route': route_data})
-        
+        return jsonify({'success': True, 'message': 'Route history deleted.'})
     except Exception as e:
-        print(f"Error in /api/generate-route: {e}")
-        return jsonify({'success': False, 'message': 'An unexpected error occurred while generating the route.'}), 500
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500

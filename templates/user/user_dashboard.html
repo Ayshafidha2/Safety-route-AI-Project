@@ -3,136 +3,229 @@
 {% block user_title %}User Dashboard{% endblock %}
 
 {% block extra_styles %}
+<!-- Bootstrap 5 CSS for responsive layout -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Leaflet CSS files -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
 <style>
-    /* --- GENERAL STYLES --- */
-    .header-card { background-image: url("{{ url_for('static', filename='Images/image.png') }}"); background-size: cover; background-position: center; border-radius: 12px; padding: 40px; color: var(--white); text-align: center; margin-bottom: 40px; position: relative; overflow: hidden; box-shadow: var(--shadow); }
-    .header-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)); z-index: 1; }
-    .header-card-content { position: relative; z-index: 2; }
-    .header-card h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 15px; }
-    .header-card p { font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin: 0 auto; }
-    .leaflet-routing-container { display: none !important; }
+    /* --- GENERAL & NEW DESIGN STYLES --- */
+    :root {
+        --primary-blue: #0d6efd;
+        --dark-text: #212529;
+        --secondary-text: #6c757d;
+        --light-bg: #f8f9fa;
+        --border-color: #dee2e6;
+        --white: #fff;
+        --shadow: 0 4px 12px rgba(0,0,0,0.08);
+        --success-color: #198754;
+    }
 
-    /* --- REVAMPED PLANNING SECTION --- */
-    .plan-trip-section { background-color: var(--white); border-radius: 16px; padding: 40px; margin-bottom: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
-    .plan-trip-section h3 { font-size: 2rem; font-weight: 600; margin-bottom: 30px; color: var(--dark-text); }
-    .form-row { display: flex; gap: 25px; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
-    .form-group { flex: 1; display: flex; flex-direction: column; min-width: 220px; text-align: left;}
-    .form-group label { font-weight: 500; margin-bottom: 8px; color: var(--secondary-color); }
-    .form-group select { width: 100%; padding: 12px 18px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; background-color: var(--light-bg); appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>'); background-repeat: no-repeat; background-position: right 15px center; background-size: 1.2em; transition: border-color 0.2s; }
-    .form-group select:focus { outline: none; border-color: var(--primary-color); }
-    .btn-primary { background: linear-gradient(to right, #007bff, #0056b3); color: var(--white); padding: 14px 35px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3); }
+    /* --- HERO SECTION --- */
+    .hero-section {
+        min-height: 65vh;
+        background-image: url("{{ url_for('static', filename='Images/image.png') }}");
+        background-size: cover;
+        background-position: center;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        margin-bottom: 50px;
+        overflow: hidden;
+    }
+    .hero-content-card {
+        background: rgba(255, 255, 255, 0.35);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 45px;
+        color: var(--dark-text);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.17);
+    }
+    .hero-content-card h1 { font-size: 2.5rem; font-weight: 700; line-height: 1.2; margin-bottom: 15px; }
+    .hero-content-card p { font-size: 1.1rem; color: #343a40; margin-bottom: 30px; }
+    .hero-buttons .btn { padding: 12px 25px; font-weight: 600; font-size: 1rem; }
+    
+    .hero-buttons .btn-primary {
+        background-color: var(--primary-blue);
+        border-color: var(--primary-blue);
+        transition: all 0.3s ease;
+    }
+    .hero-buttons .btn-primary:hover {
+        opacity: 0.9;
+    }
 
-    /* --- REVAMPED GENERATED TRIP REPORT SECTION --- */
+    /* --- FEATURES SECTION --- */
+    .features-section {
+        background-color: var(--white);
+        padding: 50px 0;
+    }
+    .section-title { font-size: 2.2rem; font-weight: 600; color: var(--dark-text); margin-bottom: 40px; }
+    .feature-item { padding: 25px; }
+    .feature-icon { font-size: 2.5rem; color: var(--primary-blue); margin-bottom: 20px; }
+    .feature-item h5 { font-size: 1.2rem; font-weight: 600; color: var(--dark-text); margin-bottom: 10px; }
+    .feature-item p { color: var(--secondary-text); font-size: 0.95rem; line-height: 1.6; }
+    
+
+    /* --- REPORT & PLANNING STYLES --- */
+    .plan-trip-section { background-color: var(--light-bg); border-radius: 16px; padding: 40px; margin-bottom: 30px; border: 1px solid var(--border-color); text-align: center; }
     .generated-route-section { display: none; }
     .generated-route-section.active { display: block; }
 
-    .trip-report-container { background-color: var(--white); border-radius: 16px; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .report-header { text-align: center; margin-bottom: 30px; }
-    .report-header h2 { font-size: 2.2rem; font-weight: 700; color: var(--dark-text); margin-bottom: 5px; }
+    .trip-report-container { background-color: var(--white); border-radius: 16px; padding: 30px; box-shadow: var(--shadow); }
+    .report-header { text-align: center; margin-bottom: 25px; }
+    .report-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--dark-text); margin-bottom: 5px; }
     .report-header h2 i { color: var(--success-color); }
-    .report-header p { font-size: 1.1rem; color: var(--secondary-color); margin-top: 0; }
-
-    /* AI Prediction Card */
-    .prediction-card { background-color: #fffbeb; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 25px; margin-bottom: 30px; }
-    .prediction-card h4 { margin-top: 0; margin-bottom: 20px; color: #b45309; font-size: 1.3rem; display: flex; align-items: center; }
-    .prediction-card h4 i { margin-right: 12px; }
-    .prediction-alert { margin-bottom: 15px; display: flex; align-items: flex-start; }
-    .prediction-alert:last-child { margin-bottom: 0; }
-    .prediction-alert i { font-size: 1.2rem; margin-right: 15px; color: #d97706; padding-top: 4px; }
-    .prediction-alert div p { margin: 0; font-size: 0.95rem; color: #92400e; line-height: 1.6; }
-    .prediction-alert div strong { display: block; margin-bottom: 4px; font-weight: 600; color: #b45309; }
+    .report-header p { font-size: 1rem; color: var(--secondary-text); margin-top: 0; }
     
-    /* Redesigned Route Summary */
-    .route-summary-card { background-color: #f8f9fa; border-radius: 12px; padding: 30px; margin-bottom: 30px; border: 1px solid var(--border-color); }
-    .route-summary-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 25px; text-align: center; margin-bottom: 25px; }
-    .summary-item { font-size: 1rem; color: var(--secondary-color); }
-    .summary-item strong { display: block; font-size: 1.1rem; color: var(--dark-text); margin-top: 5px; }
-    .summary-item .fas { font-size: 1.6rem; color: var(--primary-color); margin-bottom: 10px; }
-    .summary-item .status-badge { margin-top: 5px; font-size: 0.9rem; padding: 8px 16px; border-radius: 30px; }
-    .status-badge.safe { background-color: #d4edda; color: #155724; }
-    .status-badge.caution { background-color: #fff3cd; color: #856404; }
-    .status-badge.unsafe { background-color: #f8d7da; color: #721c24; }
-    .tip-card { margin-top: 25px; padding: 20px; background-color: #eef5ff; border-left: 5px solid var(--primary-color); border-radius: 8px; display: flex; align-items: flex-start; }
-    .tip-card i { color: var(--primary-color); font-size: 1.5rem; margin-right: 15px; }
-    .tip-card p { color: #004085; font-size: 0.95rem; margin: 0; }
+    .summary-prediction-wrapper { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
+    .summary-prediction-wrapper > .prediction-card { flex: 1 1 55%; }
+    .summary-prediction-wrapper > .route-summary-card { flex: 1 1 45%; }
 
-    /* Details Layout (Map & Stops) */
-    .details-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
-    #map { height: 550px; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1; }
-    .stops-section h4 { font-size: 1.5rem; font-weight: 600; color: var(--dark-text); margin-top: 0; margin-bottom: 20px; }
-    .recommended-stops { display: flex; flex-direction: column; gap: 15px; }
-    .stop-card { background-color: #f8f9fa; border-radius: 10px; padding: 20px; border: 1px solid #e9ecef; position: relative; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .stop-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-    .stop-card h5 { font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 5px; color: var(--dark-text); }
-    .stop-card p.stop-location { font-size: 0.9rem; margin-bottom: 10px; color: var(--secondary-color); }
-    .stop-card p.stop-location strong { color: var(--dark-text); }
-    .stop-card p.stop-budget { font-size: 0.9rem; margin-bottom: 15px; }
-    .favorite-btn { position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.7); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1rem; transition: transform 0.2s, color 0.2s; z-index: 10; }
-    .favorite-btn:hover { transform: scale(1.1); }
-    .favorite-btn.favorited { color: #ff4d4d; }
-    .favorite-btn.not-favorited { color: #ccc; }
-    @media (max-width: 992px) { .details-layout { grid-template-columns: 1fr; } #map { height: 400px; } }
-    @media (max-width: 768px) { .form-row { flex-direction: column; align-items: stretch; } }
+    .prediction-card { background-color: #fffbeb; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 20px; }
+    .prediction-card h4 { margin-top: 0; margin-bottom: 15px; color: #b45309; font-size: 1.15rem; display: flex; align-items: center; }
+    .prediction-card h4 i { margin-right: 10px; }
+    .prediction-alert { margin-bottom: 12px; display: flex; align-items: flex-start; }
+    .prediction-alert i { font-size: 1.1rem; margin-right: 12px; color: #d97706; padding-top: 3px; }
+    .prediction-alert div p { margin: 0; font-size: 0.9rem; color: #92400e; line-height: 1.5; }
+    .prediction-alert div strong { display: block; margin-bottom: 4px; font-weight: 600; color: #b45309; font-size: 0.95rem; }
+    
+    .route-summary-card { background-color: var(--light-bg); border-radius: 12px; padding: 25px; border: 1px solid var(--border-color); }
+    .route-summary-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 15px; text-align: center; }
+    .summary-item { font-size: 0.85rem; color: var(--secondary-text); }
+    .summary-item strong { display: block; font-size: 0.95rem; color: var(--dark-text); margin-top: 4px; }
+    .summary-item .fas { font-size: 1.3rem; color: var(--primary-blue); margin-bottom: 8px; }
+    .tip-card { margin-top: 25px; padding: 15px; background-color: #e7f1ff; border-left: 5px solid var(--primary-blue); border-radius: 8px; display: flex; align-items: flex-start; }
+    
+    .details-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    #map { height: 450px; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1; }
+    .stops-section h4 { font-size: 1.3rem; font-weight: 600; color: var(--dark-text); margin-top: 0; margin-bottom: 15px; }
+    .recommended-stops { display: flex; flex-direction: column; gap: 12px; }
+
+    .stop-card {
+        background-color: var(--white); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        display: flex; flex-direction: column; justify-content: space-between; min-height: 180px;
+    }
+    .stop-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .stop-card h5 { font-size: 1.1rem; font-weight: 600; margin: 0 0 5px 0; color: var(--dark-text); padding-right: 40px; }
+    .stop-card p { margin-bottom: 8px; font-size: 0.9rem; color: var(--secondary-text); }
+    .stop-card p.stop-budget { color: var(--dark-text); font-weight: 500; margin-top: 12px; }
+    .favorite-btn {
+        position: absolute; top: 15px; right: 15px; background-color: #f1f1f1; border: none; border-radius: 50%; width: 34px; height: 34px;
+        display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; z-index: 10;
+    }
+    .favorite-btn:hover { background-color: #e2e2e2; transform: scale(1.1); }
+    .favorite-btn.favorited { color: #e53e3e; background-color: #fed7d7; }
+    .favorite-btn.not-favorited { color: #a0aec0; }
+    .status-badge { font-size: 0.8rem; padding: 6px 14px; border-radius: 30px; display: inline-block; }
+    .status-badge.safe { background-color: #d1e7dd; color: #0f5132; }
+    .status-badge.caution { background-color: #fff3cd; color: #664d03; }
+    .status-badge.unsafe { background-color: #f8d7da; color: #842029; }
+    .leaflet-routing-container { display: none !important; }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .hero-section { justify-content: center; text-align: center; min-height: 50vh; }
+        .details-layout { grid-template-columns: 1fr; } 
+    }
+    @media (max-width: 768px) {
+        .summary-prediction-wrapper { flex-direction: column; }
+    }
 </style>
 {% endblock %}
 
 
 {% block user_content %}
-<div class="header-card">
-    <div class="header-card-content">
-        <h2>Plan Your Perfect Trip</h2>
-        <p>Enter your details below to generate a safe and scenic route for your next adventure in Kerala.</p>
-    </div>
-</div>
-
-<div class="plan-trip-section">
-    <h3><i class="fas fa-route"></i> Plan Your Safe Trip</h3>
-    <form id="planTripForm">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="sourceDistrict">Source District:</label>
-                <select id="sourceDistrict" name="sourceDistrict" required>
-                    <option value="">Choose...</option>
-                    {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="destinationDistrict">Destination District:</label>
-                <select id="destinationDistrict" name="destinationDistrict" required>
-                    <option value="">Choose...</option>
-                    {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="interest">Interest (Optional):</label>
-                <select id="interest" name="interest">
-                    <option value="">Any</option>
-                    {% for interest in interests %}
-                        <option value="{{ interest }}">{{ interest | capitalize }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="budget">Budget (Optional):</label>
-                <select id="budget" name="budget">
-                    <option value="">Any</option>
-                    <option value="5000">Under ₹5,000</option>
-                    <option value="10000">Under ₹10,000</option>
-                    <option value="15000">Under ₹15,000</option>
-                    <option value="20000">₹20,000+</option>
-                </select>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-5 d-none d-lg-block"></div>
+            <div class="col-lg-7 col-md-12">
+                <div class="hero-content-card">
+                    <h1>You'll never travel without our trip planner again</h1>
+                    <p>Effortlessly design and manage safe travel itineraries to make every journey unforgettable.</p>
+                    <div class="hero-buttons">
+                        <button id="startPlanningBtn" class="btn btn-primary btn-lg">
+                            Start Planning
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <button type="submit" class="btn-primary" id="generateBtn">
-            <span id="btn-text"><i class="fas fa-paper-plane"></i> Generate Safe Route</span>
-            <span id="btn-spinner" style="display:none"><i class="fas fa-spinner fa-spin"></i> Generating...</span>
-        </button>
-    </form>
-</div>
+    </div>
+</section>
 
-<div id="generatedRouteSection" class="generated-route-section">
-    <!-- Route details will be injected here by JavaScript -->
+<!-- Features Section -->
+<section class="features-section text-center">
+    <div class="container">
+        <h2 class="section-title">Smart features built for smarter journeys</h2>
+        <div class="row mt-4 g-5">
+            <div class="col-md-4">
+                <div class="feature-item"><div class="feature-icon"><i class="fas fa-route"></i></div><h5>AI-Powered Safe Routes</h5><p>Get the safest route based on real-time disaster and health data predictions, ensuring a worry-free trip.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item"><div class="feature-icon"><i class="fas fa-lightbulb"></i></div><h5>Personalized Suggestions</h5><p>Find the best places to visit and stops along the way with smart recommendations based on your interests and budget.</p></div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item"><div class="feature-icon"><i class="fas fa-map-marked-alt"></i></div><h5>Interactive Map</h5><p>Visualize your entire itinerary on a dynamic map, complete with route details and recommended points of interest.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Planning and Results Sections -->
+<div class="container py-5">
+    <div id="planTripContainer" class="plan-trip-section" style="display: none;">
+        <h3><i class="fas fa-route"></i> Plan Your Safe Trip</h3>
+        <form id="planTripForm">
+            <div class="row justify-content-center g-3 mb-4">
+                <div class="col-md-6 col-lg-3">
+                    <label for="sourceDistrict" class="form-label text-start w-100">Source District:</label>
+                    <select id="sourceDistrict" name="sourceDistrict" class="form-select" required>
+                        <option value="">Choose...</option>
+                        {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label for="destinationDistrict" class="form-label text-start w-100">Destination District:</label>
+                    <select id="destinationDistrict" name="destinationDistrict" class="form-select" required>
+                        <option value="">Choose...</option>
+                        {% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 col-lg-2">
+                    <label for="interest" class="form-label text-start w-100">Interest:</label>
+                    <select id="interest" name="interest" class="form-select">
+                        <option value="">Any</option>
+                        {% for interest in interests %}<option value="{{ interest }}">{{ interest | capitalize }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 col-lg-2">
+                    <label for="budget" class="form-label text-start w-100">Budget:</label>
+                    <select id="budget" name="budget" class="form-select">
+                        <option value="">Any</option>
+                        <option value="5000">Under ₹5,000</option>
+                        <option value="10000">Under ₹10,000</option>
+                        <option value="15000">Under ₹15,000</option>
+                        <option value="20000">₹20,000+</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="generateBtn">
+                <span id="btn-text"><i class="fas fa-paper-plane"></i> Generate Safe Route</span>
+                <span id="btn-spinner" style="display:none"><i class="fas fa-spinner fa-spin"></i> Generating...</span>
+            </button>
+        </form>
+    </div>
+
+    <div id="generatedRouteSection" class="generated-route-section mt-5">
+        <!-- Route details will be injected here by JavaScript -->
+    </div>
 </div>
 {% endblock %}
 
@@ -141,27 +234,26 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 <script>
-    const favoriteIds = new Set({{ favorite_ids_json | tojson | safe }});
-    const districtCoordinates = {{ districts_coords_json | tojson | safe }};
+const favoriteIds = new Set({{ favorite_ids_json | tojson | safe }});
+const districtCoordinates = {{ districts_coords_json | tojson | safe }};
 
-    document.addEventListener('DOMContentLoaded', function() {
-        let leafletMap;
-        let currentRouteData = null;
+document.addEventListener('DOMContentLoaded', function() {
+    let leafletMap;
+    let currentRouteData = null;
 
-        document.getElementById('planTripForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const source = document.getElementById('sourceDistrict').value;
-            const destination = document.getElementById('destinationDistrict').value;
-            const budget = document.getElementById('budget').value;
-            const interest = document.getElementById('interest').value;
+    document.getElementById('startPlanningBtn').addEventListener('click', function() {
+        const planTripContainer = document.getElementById('planTripContainer');
+        planTripContainer.style.display = 'block';
+        planTripContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 
-            if (!source || !destination || !budget || !interest) {
-                alert('Please fill out all fields.');
-                return;
-            }
-            if (source === destination) {
-                alert('Source and Destination cannot be the same.');
-                return;
+    document.getElementById('planTripForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const source = document.getElementById('sourceDistrict').value;
+        const destination = document.getElementById('destinationDistrict').value;
+        const budget = document.getElementById('budget').value;
+        const interest = document.getElementById('interest').value;
+        
         if (!source || !destination) {
             alert('Please select a source and destination district.');
             return;
@@ -186,226 +278,61 @@
             });
             const data = await response.json();
             const routeSection = document.getElementById('generatedRouteSection');
-
             if (data.success) {
                 currentRouteData = data.route;
                 renderRoute(currentRouteData);
             } else {
                 renderFallbackRoute(source, destination, data.message);
             }
+            routeSection.classList.add('active');
+            routeSection.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            console.error('Error fetching route:', error);
+            alert('An error occurred while generating the route. Please try again.');
+        } finally {
+            generateBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+        }
+    });
 
-            const generateBtn = document.getElementById('generateBtn');
-            const btnText = document.getElementById('btn-text');
-            const btnSpinner = document.getElementById('btn-spinner');
-            generateBtn.disabled = true;
-            btnText.style.display = 'none';
-            btnSpinner.style.display = 'inline';
+    function initMapAndRoute(source, destination, isFallback = false) {
+        if (leafletMap) { leafletMap.remove(); }
+        const sourceCoords = districtCoordinates[source];
+        const destCoords = districtCoordinates[destination];
+        if (!sourceCoords || !destCoords) { 
+            document.getElementById("map").innerHTML = "<p>Could not find coordinates for districts.</p>"; 
+            return; 
+        }
+        leafletMap = L.map('map').setView([10.8505, 76.2711], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(leafletMap);
+        
+        const routingControl = L.Routing.control({
+            waypoints: [ L.latLng(sourceCoords.lat, sourceCoords.lng), L.latLng(destCoords.lat, destCoords.lng) ],
+            routeWhileDragging: false, addWaypoints: false, draggableWaypoints: false,
+            lineOptions: { styles: [{ color: 'var(--primary-blue)', opacity: 0.8, weight: 6 }] }
+        }).addTo(leafletMap);
 
-            try {
-                const response = await fetch('/api/generate-route', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ source, destination, budget, interest })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentRouteData = data.route;
-
-                    // --- Logic to save a list of up to 5 routes ---
-                    const MAX_ROUTES = 5;
-                    let previousRoutes = JSON.parse(sessionStorage.getItem('previousRoutes')) || [];
-                    previousRoutes.unshift(data.route);
-                    if (previousRoutes.length > MAX_ROUTES) {
-                        previousRoutes.pop();
-                    }
-                    sessionStorage.setItem('previousRoutes', JSON.stringify(previousRoutes));
-                    // --- End of saving logic ---
-
-                    renderRoute(currentRouteData);
-                } else {
-                    renderFallbackRoute(source, destination, data.message);
-                }
-                document.getElementById('generatedRouteSection').classList.add('active');
-                document.getElementById('generatedRouteSection').scrollIntoView({ behavior: 'smooth' });
-
-            } catch (error) {
-                console.error('Error fetching route:', error);
-                alert('An error occurred while generating the route. Please try again.');
-            } finally {
-                generateBtn.disabled = false;
-                btnText.style.display = 'inline';
-                btnSpinner.style.display = 'none';
-            }
-        });
-
-        const routeSectionContainer = document.getElementById('generatedRouteSection');
-        if (routeSectionContainer) {
-            routeSectionContainer.addEventListener('click', async (event) => {
-                const favoriteButton = event.target.closest('.favorite-btn');
-                if (!favoriteButton) return;
-
-                const destId = parseInt(favoriteButton.dataset.id, 10);
-                const isFavorited = favoriteButton.classList.contains('favorited');
-                const url = isFavorited ? `/api/favorites/remove/${destId}` : `/api/favorites/add/${destId}`;
-
-                try {
-                    const response = await fetch(url, { method: 'POST' });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        favoriteButton.classList.toggle('favorited');
-                        favoriteButton.classList.toggle('not-favorited');
-                        favoriteButton.title = favoriteButton.classList.contains('favorited') ?
-                            'Remove from Favorites' :
-                            'Add to Favorites';
-
-                        if (favoriteButton.classList.contains('favorited')) {
-                            favoriteIds.add(destId);
-                        } else {
-                            favoriteIds.delete(destId);
-                        }
-                    } else {
-                        alert(result.message || 'An error occurred.');
-                    }
-                } catch (error) {
-                    console.error('Favorite toggle error:', error);
-                    alert('Could not update favorite status. Please try again.');
-                }
-                     console.warn("No routes found by Leaflet Routing Machine.");
-                     updateRouteSummaryWithTravelDetails('N/A', 'N/A', 'N/A');
-                }
-            }).on('routingerror', function(e) {
-                console.error('Leaflet Routing Error:', e.error.message);
-                updateRouteSummaryWithTravelDetails('Error', 'Error', 'Error');
+        if (!isFallback) {
+            routingControl.on('routesfound', function(e) {
+                const summary = e.routes[0].summary;
+                const distance = (summary.totalDistance / 1000).toFixed(1);
+                document.querySelector('#summary-distance strong').textContent = `${distance} km`;
+                const totalMinutes = Math.round(summary.totalTime / 60);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                const formattedTime = (hours > 0 ? `${hours} hr ` : '') + `${minutes} min`;
+                document.querySelector('#summary-time strong').textContent = formattedTime;
+                const estimatedCost = Math.round((distance / 15) * 100);
+                document.querySelector('#summary-cost strong').textContent = `₹${estimatedCost.toLocaleString()}`;
             });
         }
 
-        function initMapAndRoute(source, destination, isFallback = false) {
-            if (leafletMap) { leafletMap.remove(); }
-            const mapDiv = document.getElementById("map");
-            if (!mapDiv) { console.error("Map container not found!"); return; }
-
-            const sourceCoords = districtCoordinates[source];
-            const destCoords = districtCoordinates[destination];
-            if (!sourceCoords || !destCoords) {
-                mapDiv.innerHTML = "<p>Could not find coordinates for the selected districts.</p>";
-                return;
-            }
-
-            leafletMap = L.map('map').setView([10.8505, 76.2711], 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(leafletMap);
-
-            const routingControl = L.Routing.control({
-                waypoints: [L.latLng(sourceCoords.lat, sourceCoords.lng), L.latLng(destCoords.lat, destCoords.lng)],
-                routeWhileDragging: false,
-                addWaypoints: false,
-                draggableWaypoints: false,
-                lineOptions: { styles: [{ color: 'var(--primary-color)', opacity: 0.8, weight: 6 }] }
-            }).addTo(leafletMap);
-
-            if (!isFallback) {
-                routingControl.on('routesfound', function(e) {
-                    const routes = e.routes;
-                    if (routes && routes.length > 0) {
-                        const summary = routes[0].summary;
-                        const totalDistanceKm = (summary.totalDistance / 1000).toFixed(1);
-                        const totalTimeSeconds = summary.totalTime;
-                        const costPerKm = 15;
-                        const estimatedTravelCost = (totalDistanceKm * costPerKm).toLocaleString('en-IN', {
-                            style: 'currency',
-                            currency: 'INR',
-                            maximumFractionDigits: 0
-                        });
-                        updateRouteSummaryWithTravelDetails(totalDistanceKm, estimatedTravelCost, totalTimeSeconds);
-                        adjustStopBudgets(totalDistanceKm);
-                    } else {
-                        updateRouteSummaryWithTravelDetails('N/A', 'N/A');
-                    }
-                }).on('routingerror', function(e) {
-                    console.error('Leaflet Routing Error:', e.error.message);
-                    updateRouteSummaryWithTravelDetails('Error', 'Error');
-                });
-            }
-        }
-
-        function updateRouteSummaryWithTravelDetails(distanceKm, estimatedCost, totalTimeSeconds) {
-            const routeSummaryDetails = document.querySelector('.route-summary-details');
-            if (!routeSummaryDetails) return;
-
-            let distanceP = routeSummaryDetails.querySelector('#route-distance') || document.createElement('p');
-            distanceP.id = 'route-distance';
-            distanceP.innerHTML = `Distance: <strong>${distanceKm} km</strong>`;
-
-            let costP = routeSummaryDetails.querySelector('#route-cost') || document.createElement('p');
-            costP.id = 'route-cost';
-            costP.innerHTML = `Est. Travel Cost: <strong>${estimatedCost}</strong>`;
-
-            let timeP = routeSummaryDetails.querySelector('#route-time') || document.createElement('p');
-            timeP.id = 'route-time';
-            if (totalTimeSeconds) {
-                const hours = Math.floor(totalTimeSeconds / 3600);
-                const minutes = Math.round((totalTimeSeconds % 3600) / 60);
-                timeP.innerHTML = `Est. Travel Time: <strong>${hours}h ${minutes}m</strong>`;
-            } else {
-                timeP.innerHTML = `Est. Travel Time: <strong>N/A</strong>`;
-            }
-
-            if (!routeSummaryDetails.querySelector('#route-distance')) {
-                const interestP = routeSummaryDetails.querySelector('p:nth-child(2)');
-                if (interestP) {
-                    interestP.after(timeP, costP, distanceP);
-                }
-            }
-    function updateRouteSummaryWithTravelDetails(distanceKm, estimatedCost, totalTimeSeconds) {
-        const distanceEl = document.querySelector('#summary-distance strong');
-        const timeEl = document.querySelector('#summary-time strong');
-        const costEl = document.querySelector('#summary-cost strong');
-
-        if (distanceEl) { distanceEl.textContent = distanceKm !== 'Error' ? `${distanceKm} km` : 'N/A'; }
-        if (costEl) { costEl.textContent = estimatedCost !== 'Error' ? estimatedCost : 'N/A'; }
-        if (timeEl) {
-            if (totalTimeSeconds && totalTimeSeconds !== 'Error') {
-                const hours = Math.floor(totalTimeSeconds / 3600);
-                const minutes = Math.round((totalTimeSeconds % 3600) / 60);
-                timeEl.textContent = `${hours}h ${minutes}m`;
-            } else { timeEl.textContent = 'N/A'; }
-        }
-
-        function adjustStopBudgets(distanceInKm) {
-            const budgetElements = document.querySelectorAll('.stop-budget');
-            if (budgetElements.length === 0 || !currentRouteData || !currentRouteData.stops) return;
-            let budgetMultiplier = 1.0;
-            let adjustmentNote = '';
-            if (distanceInKm > 300) { budgetMultiplier = 0.85; adjustmentNote = 'Reduced for long distance'; } 
-            else if (distanceInKm < 150) { budgetMultiplier = 1.10; adjustmentNote = 'Increased for short distance'; }
-            budgetElements.forEach((el, index) => {
-                const originalBudget = currentRouteData.stops[index] ? currentRouteData.stops[index].budget : 0;
-                if (!isNaN(originalBudget) && originalBudget > 0) {
-                    const adjustedBudget = Math.round((originalBudget * budgetMultiplier) / 50) * 50;
-                    let noteHtml = adjustmentNote ? `<span title="${adjustmentNote}" style="font-size: 0.8em; color: var(--secondary-color); cursor: help;"> (adjusted)</span>` : '';
-                    el.innerHTML = `Est. Budget: ₹${adjustedBudget.toLocaleString()}${noteHtml}`;
-    function adjustStopBudgets(distanceInKm) {
-        const budgetElements = document.querySelectorAll('.stop-budget');
-        if (budgetElements.length === 0 || !currentRouteData || !currentRouteData.stops) return;
-
-        let budgetMultiplier = 1.0;
-        let adjustmentNote = '';
-        if (distanceInKm > 300) { budgetMultiplier = 0.85; adjustmentNote = 'Reduced for long distance'; } 
-        else if (distanceInKm < 150) { budgetMultiplier = 1.10; adjustmentNote = 'Increased for short distance'; }
-
-        budgetElements.forEach((el, index) => {
-            const originalBudget = currentRouteData.stops[index] ? currentRouteData.stops[index].budget : 0; 
-            if (!isNaN(originalBudget) && originalBudget > 0) {
-                const adjustedBudget = Math.round((originalBudget * budgetMultiplier) / 50) * 50;
-                let noteHtml = adjustmentNote ? `<span title="${adjustmentNote}" style="font-size: 0.8em; color: var(--secondary-color); cursor: help;"> (adjusted)</span>` : '';
-                el.innerHTML = `Est. Budget: ₹${adjustedBudget.toLocaleString()}${noteHtml}`;
-            } else {
-                el.innerHTML = `Est. Budget: N/A`;
-            }
-        });
+        setTimeout(function() {
+            if (leafletMap) leafletMap.invalidateSize();
+        }, 200);
     }
-
+    
     function renderRoute(routeData) {
         const routeSection = document.getElementById('generatedRouteSection');  
 
@@ -419,25 +346,21 @@
             }
             return `
             <div class="stop-card">
-                <button class="favorite-btn ${favClass}" data-id="${stop.id}" title="${favTitle}"><i class="fas fa-heart"></i></button>
-                <h5>${stop.name}</h5>
-                <p class="stop-location">${locationText}</p>
-                <p class="stop-budget">Est. Budget: ₹${stop.budget ? stop.budget.toLocaleString() : 'N/A'}</p>
-                <span class="status-badge ${stop.safety_class}">${stop.safety_text}</span>
+                <div>
+                    <button class="favorite-btn ${favClass}" data-id="${stop.id}" title="${favTitle}"><i class="fas fa-heart"></i></button>
+                    <h5>${stop.name}</h5>
+                    <p class="stop-location">${locationText}</p>
+                    <p class="stop-budget">Est. Budget: ₹${stop.budget ? stop.budget.toLocaleString() : 'N/A'}</p>
+                </div>
+                <div><span class="status-badge ${stop.safety_class}">${stop.safety_text}</span></div>
             </div>`;
         }).join('');
 
         const predictionHTML = `
             <div class="prediction-card">
                 <h4><i class="fas fa-shield-alt"></i> AI Risk Alert for ${routeData.destination}</h4>
-                <div class="prediction-alert">
-                    <i class="fas fa-cloud-showers-heavy"></i>
-                    <div><strong>Disaster Outlook</strong><p>${routeData.prediction.disaster_alert}</p></div>
-                </div>
-                <div class="prediction-alert">
-                    <i class="fas fa-syringe"></i>
-                    <div><strong>Health Outlook</strong><p>${routeData.prediction.disease_alert}</p></div>
-                </div>
+                <div class="prediction-alert"><i class="fas fa-cloud-showers-heavy"></i><div><strong>Disaster Outlook</strong><p>${routeData.prediction.disaster_alert}</p></div></div>
+                <div class="prediction-alert"><i class="fas fa-syringe"></i><div><strong>Health Outlook</strong><p>${routeData.prediction.disease_alert}</p></div></div>
             </div>`;
 
         const summaryHTML = `
@@ -451,7 +374,6 @@
                     <div class="summary-item" id="summary-cost"><i class="fas fa-rupee-sign"></i><p>Est. Travel Cost</p><strong>...</strong></div>
                     <div class="summary-item"><p>Overall Safety</p><span class="status-badge ${routeData.overall_safety_class}">${routeData.overall_safety_text}</span></div>
                 </div>
-                <div class="tip-card"><i class="fas fa-info-circle"></i><p>${routeData.tip}</p></div>
             </div>`;
 
         routeSection.innerHTML = `
@@ -460,8 +382,7 @@
                     <h2><i class="fas fa-check-square"></i> Your Safe Route is Ready!</h2>
                     <p>A personalized and safety-conscious itinerary from ${routeData.source} to ${routeData.destination}</p>
                 </div>
-                ${predictionHTML}
-                ${summaryHTML}
+                <div class="summary-prediction-wrapper">${predictionHTML}${summaryHTML}</div>
                 <div class="details-layout">
                     <div id="map"></div>
                     <div class="stops-section">
@@ -469,27 +390,28 @@
                         <div class="recommended-stops">${stopsHTML}</div>
                     </div>
                 </div>
+                <div class="tip-card">
+                    <i class="fas fa-info-circle" style="color: var(--primary-blue); font-size: 1.3rem; margin-right: 12px;"></i>
+                    <p style="color: #004085; font-size: 0.9rem; margin: 0; line-height: 1.5;">Enjoy your journey! Always check local news for the latest updates on weather and road conditions.</p>
+                </div>
             </div>`;
 
         setTimeout(() => { initMapAndRoute(routeData.source, routeData.destination); }, 100);
     }
-
+    
     function renderFallbackRoute(source, destination, message) {
         const routeSection = document.getElementById('generatedRouteSection');
         const fallbackMessage = message || "We couldn't generate a full safe route. Here is the direct route map.";
         routeSection.innerHTML = `
             <div class="trip-report-container">
-                <div class="report-header" style="color: var(--warning-color);"><i class="fas fa-map-signs"></i><h2>Basic Route Map</h2></div>
-                <div class="tip-card" style="background-color: #fff3cd; border-color: #ffc107; margin-bottom: 30px;">
-                    <i class="fas fa-info-circle" style="color: #856404;"></i><p style="color: #856404;">${fallbackMessage}</p>
-                </div>
+                <div class="report-header text-center" style="color: var(--warning-color);"><i class="fas fa-map-signs"></i><h2>Basic Route Map</h2></div>
+                <div class="tip-card" style="background-color: #fff3cd; border-color: #ffc107; margin-bottom: 30px;"><i class="fas fa-info-circle" style="color: #856404;"></i><p style="color: #856404;">${fallbackMessage}</p></div>
                 <div id="map" style="height: 500px; border-radius: 12px;"></div>
             </div>`;
         setTimeout(() => { initMapAndRoute(source, destination, true); }, 100);
     }
 
-    const routeSectionContainer = document.getElementById('generatedRouteSection');
-    routeSectionContainer.addEventListener('click', async (event) => {
+    document.getElementById('generatedRouteSection').addEventListener('click', async (event) => {
         const favoriteButton = event.target.closest('.favorite-btn');
         if (!favoriteButton) return; 
 
@@ -504,79 +426,14 @@
             if (result.success) {
                 favoriteButton.classList.toggle('favorited');
                 favoriteButton.classList.toggle('not-favorited');
-                favoriteButton.title = favoriteButton.classList.contains('favorited') 
-                    ? 'Remove from Favorites' 
-                    : 'Add to Favorites';
-                
-                if (favoriteButton.classList.contains('favorited')) {
-                    favoriteIds.add(destId);
-                } else {
-                    el.innerHTML = `Est. Budget: N/A`;
-                }
-            });
-        }
-
-        function renderRoute(routeData) {
-            const routeSection = document.getElementById('generatedRouteSection');
-            if (!routeSection) return;
-
-            const stopsHTML = routeData.stops.map(stop => {
-                const isFavorited = favoriteIds.has(stop.id);
-                const favClass = isFavorited ? 'favorited' : 'not-favorited';
-                const favTitle = isFavorited ? 'Remove from Favorites' : 'Add to Favorites';
-                return `
-                <div class="stop-card">
-                    <button class="favorite-btn ${favClass}" data-id="${stop.id}" title="${favTitle}"><i class="fas fa-heart"></i></button>
-                    <h5>${stop.name}</h5>
-                    <p>${stop.type}</p>
-                    <p class="stop-budget">Est. Budget: ₹${stop.budget ? stop.budget.toLocaleString() : 'N/A'}</p>
-                    <span class="status-badge ${stop.safety_class}">${stop.safety_text}</span>
-                </div>`;
-            }).join('');
-            routeSection.innerHTML = `
-                <div class="route-header"><i class="fas fa-check-square"></i> Safe Route Generated</div>
-                <div class="route-layout">
-                    <div id="map"></div>
-                    <div id="route-details">
-                        <div class="route-card">
-                            <h4>Route Summary</h4>
-                            <div class="route-summary-details">
-                                <p><strong>${routeData.source}</strong> <i class="fas fa-arrow-right"></i> <strong>${routeData.destination}</strong></p>
-                                <p>Interest: <strong>${routeData.interest}</strong></p>
-                                <span class="status-badge ${routeData.overall_safety_class}">Overall Safety: ${routeData.overall_safety_text}</span>
-                            </div>
-                        </div>
-                        <div class="route-card">
-                            <h4>Recommended Stop on Route</h4>
-                            <div class="recommended-stops">${stopsHTML}</div>
-                        </div>
-                        <div class="tip-card"><i class="fas fa-info-circle"></i><p>${routeData.tip}</p></div>
-                    </div>
-                </div>`;
-            setTimeout(() => { initMapAndRoute(routeData.source, routeData.destination); }, 100);
-        }
-
-        function renderFallbackRoute(source, destination, message) {
-            const routeSection = document.getElementById('generatedRouteSection');
-            if (!routeSection) return;
-            const fallbackMessage = message || "We couldn't generate a full safe route. Here is the direct route map.";
-            routeSection.innerHTML = `
-                <div class="route-header" style="color: var(--warning-color);"><i class="fas fa-map-signs"></i> Basic Route Map</div>
-                <div class="route-layout">
-                    <div id="map"></div>
-                    <div id="route-details">
-                         <div class="route-card"><h4>Route Summary</h4><p><strong>${source}</strong> <i class="fas fa-arrow-right"></i> <strong>${destination}</strong></p></div>
-                         <div class="tip-card" style="background-color: #fff3cd; border-color: #ffc107;">
-                             <i class="fas fa-info-circle" style="color: #856404;"></i><p style="color: #856404;">${fallbackMessage}</p>
-                         </div>
-                    </div>
-                </div>`;
-            setTimeout(() => { initMapAndRoute(source, destination, true); }, 100);
+                favoriteButton.title = favoriteButton.classList.contains('favorited') ? 'Remove from Favorites' : 'Add to Favorites';
+                if (favoriteButton.classList.contains('favorited')) favoriteIds.add(destId); else favoriteIds.delete(destId);
             } else { alert(result.message || 'An error occurred.'); }
         } catch (error) {
             console.error('Favorite toggle error:', error);
             alert('Could not update favorite status. Please try again.');
         }
     });
+});
 </script>
 {% endblock %}

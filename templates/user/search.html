@@ -4,7 +4,6 @@
 
 {% block extra_styles %}
 <style>
-    /* --- Existing Styles (Unchanged) --- */
     .dest-card-img { width: 100%; height: 180px; object-fit: cover; }
     .dest-card-content { padding: 20px; flex-grow: 1; }
     .search-header { background-color: var(--white); padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: var(--shadow); text-align: center; }
@@ -14,6 +13,16 @@
     .search-form input:focus { outline: none; border-color: var(--primary-color); }
     .search-form button { padding: 0 25px; border: 1px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 1rem; }
     .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+    .dest-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
     .dest-card h3 { margin-top: 0; font-size: 1.25rem; }
     .dest-card .location { color: var(--secondary-color); font-weight: 500; margin-bottom: 15px; }
     .dest-card .description { font-size: 0.95rem; line-height: 1.6; color: #555; }
@@ -33,40 +42,6 @@
     .modal-body .detail-item strong { display: block; color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 4px; }
     .modal-body .detail-item p { margin: 0; font-size: 1rem; line-height: 1.6; }
     #modal-image { width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
-
-    /* --- ADDED/MODIFIED Styles for Favorites --- */
-    .dest-card {
-        position: relative; /* This is crucial for positioning the favorite button */
-        background-color: var(--white);
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        cursor: pointer;
-    }
-    .favorite-btn { 
-        position: absolute; 
-        top: 15px; 
-        right: 15px; 
-        background: rgba(255, 255, 255, 0.8); 
-        border: none; 
-        border-radius: 50%; 
-        width: 40px; 
-        height: 40px; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        cursor: pointer; 
-        font-size: 1.2rem; 
-        transition: transform 0.2s, color 0.2s; 
-        z-index: 10;
-    }
-    .favorite-btn:hover { transform: scale(1.1); }
-    .favorite-btn.favorited { color: #ff4d4d; }
-    .favorite-btn.not-favorited { color: #ccc; }
-    .favorite-btn i { pointer-events: none; }
 </style>
 {% endblock %}
 
@@ -90,17 +65,9 @@
              data-description="{{ dest.Description }}"
              data-budget="{{ dest.budget }}"
              data-image_url="{{ dest.image_url }}"
-             data-safety-text="{{ dest.safety_ratings[0].overall_safety if dest.safety_ratings and dest.safety_ratings[0] else 'Not Rated' }}"
-             data-safety-class="{{ {'Low Risk': 'safe', 'Moderate Risk': 'caution', 'High Risk': 'unsafe'}.get(dest.safety_ratings[0].overall_safety if dest.safety_ratings and dest.safety_ratings[0], 'caution') }}"
+             data-safety-text="{{ dest.safety_info.text }}"
+             data-safety-class="{{ dest.safety_info.class }}"
              role="button" tabindex="0">
-            
-            <!-- NEW: Favorite Button -->
-            {% set is_favorited = dest.Destination_id in favorite_ids %}
-            <button class="favorite-btn {{ 'favorited' if is_favorited else 'not-favorited' }}" 
-                    data-id="{{ dest.Destination_id }}"
-                    title="{{ 'Remove from Favorites' if is_favorited else 'Add to Favorites' }}">
-                <i class="fas fa-heart"></i>
-            </button>
             
             {% if dest.image_url %}
             <img src="{{ dest.image_url }}" alt="{{ dest.Place }}" class="dest-card-img">
@@ -112,13 +79,7 @@
             </div>
             <div class="dest-card-footer">
                 <span>Budget: ₹{{ "{:,.0f}".format(dest.budget|int) if dest.budget else 'N/A' }}</span>
-                {% if dest.safety_ratings and dest.safety_ratings[0] %}
-                    {% set rating = dest.safety_ratings[0] %}
-                    {% set status_map = {'Low Risk': 'safe', 'Moderate Risk': 'caution', 'High Risk': 'unsafe'} %}
-                    <span class="status-badge {{ status_map.get(rating.overall_safety, 'caution') }}">{{ rating.overall_safety }}</span>
-                {% else %}
-                    <span class="status-badge caution">Not Rated</span>
-                {% endif %}
+                <span class="status-badge {{ dest.safety_info.class }}">{{ dest.safety_info.text }}</span>
             </div>
         </div>
     {% endfor %}
@@ -197,13 +158,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     ? `<img src="${dest.image_url}" alt="${dest.place}" class="dest-card-img">`
                     : '';
                 
-                // Determine if this item is a favorite (we need to check the live DOM for this)
-                // Since this is an API call, we can't use the server-side 'favorite_ids'
-                // For simplicity, we'll assume not favorited on search results. A more complex app might fetch favorite status too.
-                const isFavorited = false; // Simplified for live search
-                const favClass = isFavorited ? 'favorited' : 'not-favorited';
-                const favTitle = isFavorited ? 'Remove from Favorites' : 'Add to Favorites';
-
                 const cardHTML = `
                     <div class="dest-card" 
                          data-id="${dest.id}" 
@@ -212,10 +166,6 @@ document.addEventListener('DOMContentLoaded', function () {
                          data-image_url="${dest.image_url || ''}"
                          data-safety-text="${dest.safety.text}" data-safety-class="${dest.safety.class_name}"
                          role="button" tabindex="0">
-                        
-                        <button class="favorite-btn ${favClass}" data-id="${dest.id}" title="${favTitle}">
-                            <i class="fas fa-heart"></i>
-                        </button>
                         
                         ${imageTag}
 
@@ -241,50 +191,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const query = event.target.value.trim();
         clearTimeout(debounceTimer);
 
-        if (!query) {
-            debounceTimer = setTimeout(() => {
-                window.location.reload();
-            }, 500);
-            return;
-        }
-
         debounceTimer = setTimeout(() => {
             performSearch(query);
         }, 300);
     });
 
-    // REPLACED: Combined event listener for cards and favorite buttons
-    resultsGrid.addEventListener('click', async (event) => {
-        const favoriteButton = event.target.closest('.favorite-btn');
+    resultsGrid.addEventListener('click', (event) => {
         const card = event.target.closest('.dest-card');
-
-        if (favoriteButton) {
-            // --- Handle favorite button click ---
-            event.stopPropagation(); // Prevent modal from opening
-            const destId = favoriteButton.dataset.id;
-            const isFavorited = favoriteButton.classList.contains('favorited');
-            const url = isFavorited ? `/api/favorites/remove/${destId}` : `/api/favorites/add/${destId}`;
-            
-            try {
-                const response = await fetch(url, { method: 'POST' });
-                const result = await response.json();
-
-                if (result.success) {
-                    favoriteButton.classList.toggle('favorited');
-                    favoriteButton.classList.toggle('not-favorited');
-                    favoriteButton.title = favoriteButton.classList.contains('favorited') 
-                        ? 'Remove from Favorites' 
-                        : 'Add to Favorites';
-                } else {
-                    alert(result.message || 'An error occurred.');
-                }
-            } catch (error) {
-                console.error('Favorite toggle error:', error);
-                alert('Could not update favorite status. Please try again.');
-            }
-
-        } else if (card) {
-            // --- Handle card click to open modal ---
+        if (card) {
             const destId = card.dataset.id;
             if (destId && destId !== 'undefined') {
                 fetch(`/api/increment-search-count/${destId}`, {

@@ -1,0 +1,144 @@
+{% extends "user/user_layout.html" %}
+
+{% block user_title %}Previous Routes{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .page-header { text-align: center; margin-bottom: 30px; }
+    .page-header h2 { margin-top: 0; color: var(--dark-text); font-size: 2rem; }
+    
+    .history-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .history-card {
+        background-color: var(--white);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        padding: 25px;
+        border-left: 5px solid var(--primary-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .history-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.07);
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap; /* For smaller screens */
+        gap: 10px;
+    }
+    
+    .route-path h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--dark-text);
+    }
+    .route-path .fas { color: var(--primary-color); }
+
+    .route-date {
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        font-weight: 500;
+    }
+    
+    .history-body h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-text);
+        margin-bottom: 15px;
+    }
+
+    .stops-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .stop-item {
+        background-color: var(--light-bg);
+        border: 1px solid var(--border-color);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+    .status-badge.safe { background-color: #d1e7dd; color: #0f5132; }
+    .status-badge.caution { background-color: #fff3cd; color: #664d03; }
+    .status-badge.unsafe { background-color: #f8d7da; color: #842029; }
+
+    .empty-state { text-align: center; padding: 50px; background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); }
+    .empty-state i { font-size: 3rem; color: #ccc; margin-bottom: 20px; }
+    .empty-state h3 { color: var(--dark-text); }
+    .empty-state p { color: var(--secondary-color); }
+    .empty-state a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block user_content %}
+<div class="page-header">
+    <h2><i class="fas fa-history"></i> My Previous Routes</h2>
+</div>
+
+{% if histories %}
+    <div class="history-grid">
+        {% for history in histories %}
+            <div class="history-card">
+                <div class="history-header">
+                    <div class="route-path">
+                        <h3>
+                            <span>{{ history.source }}</span>
+                            <i class="fas fa-long-arrow-alt-right"></i>
+                            <span>{{ history.destination }}</span>
+                        </h3>
+                    </div>
+                    <span class="route-date">
+                        Generated on {{ history.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                    </span>
+                </div>
+                <div class="history-body">
+                    {% if history.stops %}
+                        <h4>Recommended Stops:</h4>
+                        <ul class="stops-list">
+                            {% for stop in history.stops %}
+                                <li class="stop-item">
+                                    <span>{{ stop.name }} ({{ stop.district }})</span>
+                                    <span class="status-badge {{ stop.safety_class }}">{{ stop.safety_text }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No specific stops were recommended for this route.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <i class="fas fa-route"></i>
+        <h3>No Route History</h3>
+        <p>You haven't generated any routes yet. Plan your first trip to see your history here!</p>
+        <a href="{{ url_for('views.dashboard') }}">Plan a Trip</a>
+    </div>
+{% endif %}
+
+{% endblock %}
