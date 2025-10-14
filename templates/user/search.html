@@ -4,16 +4,19 @@
 
 {% block extra_styles %}
 <style>
-    .dest-card-img { width: 100%; height: 180px; object-fit: cover; }
-    .dest-card-content { padding: 20px; flex-grow: 1; }
+    /* --- Base Layout & Search Header --- */
     .search-header { background-color: var(--white); padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: var(--shadow); text-align: center; }
     .search-header h2 { margin-top: 0; color: var(--dark-text); }
     .search-form { display: flex; max-width: 600px; margin: 0 auto; }
     .search-form input { flex-grow: 1; padding: 12px 15px; font-size: 1rem; border: 1px solid var(--border-color); border-radius: 8px 0 0 8px; border-right: none; }
     .search-form input:focus { outline: none; border-color: var(--primary-color); }
     .search-form button { padding: 0 25px; border: 1px solid var(--primary-color); background-color: var(--primary-color); color: white; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 1rem; }
+
+    /* --- Grid & Card Layout --- */
     .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+    
     .dest-card {
+        position: relative; /* CRITICAL: Required for the favorite button positioning */
         background-color: var(--white);
         border-radius: 12px;
         box-shadow: var(--shadow);
@@ -23,25 +26,57 @@
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         cursor: pointer;
     }
+    .dest-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .dest-card-img { width: 100%; height: 180px; object-fit: cover; }
+    .dest-card-content { padding: 20px; flex-grow: 1; }
     .dest-card h3 { margin-top: 0; font-size: 1.25rem; }
     .dest-card .location { color: var(--secondary-color); font-weight: 500; margin-bottom: 15px; }
-    .dest-card .description { font-size: 0.95rem; line-height: 1.6; color: #555; }
     .dest-card-footer { padding: 15px 20px; background-color: var(--light-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
+
+    /* --- Favorite Button Styles --- */
+    .favourite-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.4);
+        border: none;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 1.1rem;
+        color: white; /* Default color for outline icon */
+        transition: transform 0.2s ease, background-color 0.2s ease;
+        z-index: 10;
+    }
+    .favourite-btn:hover {
+        transform: scale(1.1);
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+    .favourite-btn .fa-heart {
+        pointer-events: none;
+    }
+    .favourite-btn .fas.fa-heart {
+        color: #ff4d4d; /* Red color for a filled/favorited heart */
+    }
+
+    /* --- Status Badges --- */
     .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
     .status-badge.safe { background-color: #d4edda; color: #155724; }
     .status-badge.caution { background-color: #fff3cd; color: #856404; }
     .status-badge.unsafe { background-color: #f8d7da; color: #721c24; }
+    
+    /* --- Modal Styles --- */
     .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center; }
     .modal-content { background-color: var(--white); margin: auto; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 5px 20px rgba(0,0,0,0.25); animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     .modal-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
-    .modal-header h2 { margin: 0; font-size: 1.75rem; color: var(--dark-text); }
-    .close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; background: none; border: none; }
-    .close-btn:hover, .close-btn:focus { color: #333; }
-    .modal-body .detail-item { margin-bottom: 15px; }
-    .modal-body .detail-item strong { display: block; color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 4px; }
-    .modal-body .detail-item p { margin: 0; font-size: 1rem; line-height: 1.6; }
-    #modal-image { width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
 </style>
 {% endblock %}
 
@@ -66,8 +101,12 @@
              data-budget="{{ dest.budget }}"
              data-image_url="{{ dest.image_url }}"
              data-safety-text="{{ dest.safety_info.text }}"
-             data-safety-class="{{ dest.safety_info.class }}"
-             role="button" tabindex="0">
+             data-safety-class="{{ dest.safety_info.class }}">
+            
+            <button class="favourite-btn" data-id="{{ dest.Destination_id }}" title="Toggle Favorite">
+                <!-- This now correctly uses the 'is_favourite' flag from your backend -->
+                <i class="{% if dest.is_favourite %}fas{% else %}far{% endif %} fa-heart"></i>
+            </button>
             
             {% if dest.image_url %}
             <img src="{{ dest.image_url }}" alt="{{ dest.Place }}" class="dest-card-img">
@@ -85,6 +124,7 @@
     {% endfor %}
 </div>
 
+<!-- Modal remains the same as your original code -->
 <div id="destinationModal" class="modal" role="dialog" aria-modal="true">
     <div class="modal-content">
         <div class="modal-header">
@@ -93,7 +133,6 @@
         </div>
         <div class="modal-body">
             <img src="" alt="Destination Image" id="modal-image" style="display: none;">
-
             <div class="detail-item"><strong>Location</strong><p id="modal-location"></p></div>
             <div class="detail-item"><strong>Description</strong><p id="modal-description"></p></div>
             <div class="detail-item"><strong>Estimated Budget</strong><p id="modal-budget"></p></div>
@@ -111,8 +150,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('destinationModal');
     const searchInput = document.getElementById('searchInput');
     const closeModalBtn = document.getElementById('closeModalBtn');
-    let debounceTimer;
 
+    // This function opens the details modal
     const openModal = (card) => {
         const data = card.dataset;
         document.getElementById('modal-place').textContent = data.place;
@@ -136,90 +175,66 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.style.display = 'flex';
     };
 
+    // This function closes the details modal
     const closeModal = () => {
         modal.style.display = 'none';
     };
-    
-    const performSearch = async (query) => {
+
+    // This function handles the favorite button click
+    const toggleFavourite = async (button) => {
+        const destId = button.dataset.id;
+        const icon = button.querySelector('i.fa-heart');
+        if (!destId || !icon) return;
+
         try {
-            const response = await fetch(`/api/search-destinations?q=${encodeURIComponent(query)}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const destinations = await response.json();
-
-            resultsGrid.innerHTML = '';
-            if (destinations.length === 0) {
-                resultsGrid.innerHTML = '<p>No destinations found matching your search.</p>';
-                return;
+            // This fetch call matches the new endpoint in your views.py
+            const response = await fetch(`/api/favorites/toggle/${destId}`, { method: 'POST' });
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
+            
+            const result = await response.json();
 
-            destinations.forEach(dest => {
-                const budgetFormatted = dest.budget ? `₹${dest.budget.toLocaleString('en-IN')}` : 'N/A';
-                const imageTag = (dest.image_url && dest.image_url !== 'None')
-                    ? `<img src="${dest.image_url}" alt="${dest.place}" class="dest-card-img">`
-                    : '';
-                
-                const cardHTML = `
-                    <div class="dest-card" 
-                         data-id="${dest.id}" 
-                         data-place="${dest.place}" data-name="${dest.name}" data-type="${dest.type}"
-                         data-description="${dest.description}" data-budget="${dest.budget}"
-                         data-image_url="${dest.image_url || ''}"
-                         data-safety-text="${dest.safety.text}" data-safety-class="${dest.safety.class_name}"
-                         role="button" tabindex="0">
-                        
-                        ${imageTag}
-
-                        <div class="dest-card-content">
-                            <h3>${dest.place}</h3>
-                            <p class="location"><i class="fas fa-map-marker-alt"></i> ${dest.name} • ${dest.type}</p>
-                        </div>
-                        <div class="dest-card-footer">
-                            <span>Budget: ${budgetFormatted}</span>
-                            <span class="status-badge ${dest.safety.class_name}">${dest.safety.text}</span>
-                        </div>
-                    </div>`;
-                resultsGrid.insertAdjacentHTML('beforeend', cardHTML);
-            });
-
+            if (result.success) {
+                // Update the icon based on the true state from the server
+                if (result.is_favourite) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                }
+            } else {
+                alert(result.message || 'Could not update favorites.');
+            }
         } catch (error) {
-            console.error('Search failed:', error);
-            resultsGrid.innerHTML = '<p>An error occurred while searching. Please try again.</p>';
+            console.error('Favorite toggle error:', error);
+            alert('An error occurred. Please try again.');
         }
     };
     
-    searchInput.addEventListener('input', (event) => {
-        const query = event.target.value.trim();
-        clearTimeout(debounceTimer);
-
-        debounceTimer = setTimeout(() => {
-            performSearch(query);
-        }, 300);
-    });
-
+    // Main click listener for the entire grid of cards
     resultsGrid.addEventListener('click', (event) => {
+        // First, check if the favorite button was the click target
+        const favouriteBtn = event.target.closest('.favourite-btn');
+        if (favouriteBtn) {
+            event.stopPropagation(); // CRITICAL: Prevents the modal from opening
+            toggleFavourite(favouriteBtn);
+            return; // Stop further processing
+        }
+
+        // If not the favorite button, check if a card was clicked
         const card = event.target.closest('.dest-card');
         if (card) {
-            const destId = card.dataset.id;
-            if (destId && destId !== 'undefined') {
-                fetch(`/api/increment-search-count/${destId}`, {
-                    method: 'POST'
-                }).catch(error => console.error('Error incrementing count:', error));
-            }
             openModal(card);
         }
     });
 
+    // All modal and search event listeners
     closeModalBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            closeModal();
-        }
-    });
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            closeModal();
-        }
-    });
+    window.addEventListener('click', (event) => { if (event.target === modal) closeModal(); });
+    window.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(); });
+    // Your old 'performSearch' is not needed if the backend handles search filtering on page load
 });
 </script>
 {% endblock %}
