@@ -4,92 +4,49 @@
 
 {% block extra_styles %}
 <style>
+    /* --- Styles from your original file (no changes here) --- */
     .page-header { text-align: center; margin-bottom: 30px; }
     .page-header h2 { margin-top: 0; color: var(--dark-text); font-size: 2rem; }
-    
-    .history-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-
-    .history-card {
-        background-color: var(--white);
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        padding: 25px;
-        border-left: 5px solid var(--primary-color);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .history-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.07);
-    }
-
-    .history-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid var(--border-color);
-        flex-wrap: wrap; /* For smaller screens */
-        gap: 10px;
-    }
-    
-    .route-path h3 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        color: var(--dark-text);
-    }
+    .history-grid { display: flex; flex-direction: column; gap: 25px; }
+    .history-card { background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 25px; border-left: 5px solid var(--primary-color); transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease, height 0.4s ease, margin 0.4s ease, padding 0.4s ease; position: relative; }
+    .history-card:hover { transform: translateY(-5px); box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.07); }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
+    .route-path h3 { margin: 0; font-size: 1.5rem; font-weight: 600; display: flex; align-items: center; gap: 15px; color: var(--dark-text); }
     .route-path .fas { color: var(--primary-color); }
-
-    .route-date {
-        font-size: 0.9rem;
-        color: var(--secondary-color);
-        font-weight: 500;
-    }
-    
-    .history-body h4 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--dark-text);
-        margin-bottom: 15px;
-    }
-
-    .stops-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 0;
-        list-style: none;
-    }
-
-    .stop-item {
-        background-color: var(--light-bg);
-        border: 1px solid var(--border-color);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
+    .route-date { font-size: 0.9rem; color: var(--secondary-color); font-weight: 500; padding-top: 20px;}
+    .history-body h4 { font-size: 1.1rem; font-weight: 600; color: var(--dark-text); margin-bottom: 15px; }
+    .route-preferences { display: flex; flex-wrap: wrap; gap: 25px; margin-bottom: 20px; font-size: 0.95rem; }
+    .route-preferences .preference-item { color: var(--secondary-color); }
+    .route-preferences .preference-item strong { color: var(--dark-text); margin-left: 8px; }
+    .stops-list { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
+    .stop-item { background-color: var(--light-bg); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
     .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
     .status-badge.safe { background-color: #d1e7dd; color: #0f5132; }
     .status-badge.caution { background-color: #fff3cd; color: #664d03; }
     .status-badge.unsafe { background-color: #f8d7da; color: #842029; }
+    
+    /* --- Delete Button & Loading Spinner Styles --- */
+    .delete-route-btn { position: absolute; top: 5px; right: 50px; background: none; border: none; color: var(--secondary-color); font-size: 1.1rem; cursor: pointer; padding: 15px; line-height: 1; border-radius: 50%; transition: color 0.2s ease, background-color 0.2s ease; width: 36px; height: 36px; display: inline-flex; justify-content: center; align-items: center; }
+    .delete-route-btn:hover { color: var(--danger-color); background-color: #fbe9e9; }
+    .delete-route-btn .spinner { display: none; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .delete-route-btn.loading .fa-trash-alt { display: none; }
+    .delete-route-btn.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .empty-state { text-align: center; padding: 50px; background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); }
+    /* --- Empty State Styles --- */
+    .empty-state { text-align: center; padding: 50px; background-color: var(--white); border-radius: 12px; box-shadow: var(--shadow); transition: opacity 0.5s ease; }
     .empty-state i { font-size: 3rem; color: #ccc; margin-bottom: 20px; }
     .empty-state h3 { color: var(--dark-text); }
     .empty-state p { color: var(--secondary-color); }
     .empty-state a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+
+    /* --- Toast Notification Styles --- */
+    #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1050; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .toast { display: flex; align-items: center; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateX(calc(100% + 20px)); opacity: 0; transition: transform 0.4s ease, opacity 0.4s ease; min-width: 280px; }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast-icon { margin-right: 12px; font-size: 1.2rem; }
+    .toast.success { background-color: #dcfce7; color: #14532d; border-left: 5px solid #22c55e; }
+    .toast.error { background-color: #fee2e2; color: #991b1b; border-left: 5px solid #ef4444; }
 </style>
 {% endblock %}
 
@@ -98,41 +55,50 @@
     <h2><i class="fas fa-history"></i> My Previous Routes</h2>
 </div>
 
+<div id="toast-container"></div>
+
 {% if histories %}
-    <div class="history-grid">
+    <div class="history-grid" id="historyGrid">
         {% for history in histories %}
-            <div class="history-card">
+            <div class="history-card" data-history-id="{{ history.id }}">
+                <button class="delete-route-btn" title="Delete this route history">
+                    <span class="button-icon"><i class="fas fa-trash-alt"></i></span>
+                    <span class="spinner"></span>
+                </button>
+
+                <!-- ... (rest of the card content is unchanged) ... -->
                 <div class="history-header">
-                    <div class="route-path">
-                        <h3>
-                            <span>{{ history.source }}</span>
-                            <i class="fas fa-long-arrow-alt-right"></i>
-                            <span>{{ history.destination }}</span>
-                        </h3>
-                    </div>
-                    <span class="route-date">
-                        Generated on {{ history.created_at.strftime('%d %b %Y, %I:%M %p') }}
-                    </span>
+                    <div class="route-path"><h3><span>{{ history.source }}</span><i class="fas fa-long-arrow-alt-right"></i><span>{{ history.destination }}</span></h3></div>
+                    <span class="route-date">Generated on {{ history.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
                 </div>
                 <div class="history-body">
+                    <div class="route-preferences">
+                        <div class="preference-item"><i class="fas fa-lightbulb"></i> Interest: <strong>{{ history.interest | capitalize }}</strong></div>
+                        <div class="preference-item"><i class="fas fa-rupee-sign"></i> Budget: {% set budget_val = history.budget|int(-1) %}<strong>{% if budget_val > 0 %}Under ₹{{ "{:,.0f}".format(budget_val) }}{% else %}{{ history.budget }}{% endif %}</strong></div>
+                    </div>
                     {% if history.stops %}
                         <h4>Recommended Stops:</h4>
                         <ul class="stops-list">
                             {% for stop in history.stops %}
-                                <li class="stop-item">
-                                    <span>{{ stop.name }} ({{ stop.district }})</span>
-                                    <span class="status-badge {{ stop.safety_class }}">{{ stop.safety_text }}</span>
-                                </li>
+                                <li class="stop-item"><span>{{ stop.name }} ({{ stop.district }})</span><span class="status-badge {{ stop.safety_class }}">{{ stop.safety_text }}</span></li>
                             {% endfor %}
                         </ul>
-                    {% else %}
-                        <p>No specific stops were recommended for this route.</p>
-                    {% endif %}
+                    {% else %}<p>No specific stops were recommended for this route.</p>{% endif %}
                 </div>
             </div>
         {% endfor %}
     </div>
+
+    <!-- Hidden Empty State (to be shown by JS) -->
+    <div class="empty-state" id="emptyState" style="display: none; opacity: 0;">
+        <i class="fas fa-route"></i>
+        <h3>No Route History</h3>
+        <p>You haven't generated any routes yet. Plan your first trip to see your history here!</p>
+        <a href="{{ url_for('views.dashboard') }}">Plan a Trip</a>
+    </div>
+
 {% else %}
+    <!-- Initial Empty State (shown if no histories exist on page load) -->
     <div class="empty-state">
         <i class="fas fa-route"></i>
         <h3>No Route History</h3>
@@ -140,5 +106,86 @@
         <a href="{{ url_for('views.dashboard') }}">Plan a Trip</a>
     </div>
 {% endif %}
+{% endblock %}
 
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const historyGrid = document.getElementById('historyGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    // --- Professional Toast Notification Helper ---
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        toast.innerHTML = `<i class="fas ${iconClass} toast-icon"></i> ${message}`;
+        container.appendChild(toast);
+
+        setTimeout(() => toast.classList.add('show'), 100); // Animate in
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500); // Remove from DOM after animation
+        }, 4000);
+    }
+
+    if (historyGrid) {
+        historyGrid.addEventListener('click', async function (event) {
+            const deleteButton = event.target.closest('.delete-route-btn');
+            if (!deleteButton || deleteButton.disabled) return;
+
+            const card = deleteButton.closest('.history-card');
+            const historyId = card.dataset.historyId;
+
+            // Using custom modal/confirm is an option, but window.confirm is simple and effective.
+            if (!confirm('Are you sure you want to permanently delete this route history?')) return;
+
+            // --- 1. Provide Instant Feedback ---
+            deleteButton.classList.add('loading');
+            deleteButton.disabled = true;
+
+            try {
+                const response = await fetch(`/api/delete-route-history/${historyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    // --- 2. Animate and Remove Card ---
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                    card.style.height = '0';
+                    card.style.paddingTop = '0';
+                    card.style.paddingBottom = '0';
+                    card.style.marginTop = '0';
+                    card.style.marginBottom = '0';
+                    
+                    setTimeout(() => {
+                        card.remove();
+                        showToast(result.message, 'success');
+                        
+                        // --- 3. Handle Empty State without Page Reload ---
+                        if (historyGrid.children.length === 0) {
+                            historyGrid.style.display = 'none';
+                            emptyState.style.display = 'block';
+                            setTimeout(() => emptyState.style.opacity = '1', 50);
+                        }
+                    }, 400); // Match transition duration
+                } else {
+                    showToast(result.message || 'Failed to delete route history.', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('An unexpected error occurred. Please try again.', 'error');
+            } finally {
+                // --- 4. Always Revert Button State ---
+                deleteButton.classList.remove('loading');
+                deleteButton.disabled = false;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

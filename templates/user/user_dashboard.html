@@ -416,19 +416,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!favoriteButton) return; 
 
         const destId = parseInt(favoriteButton.dataset.id, 10);
-        const isFavorited = favoriteButton.classList.contains('favorited');
-        const url = isFavorited ? `/api/favorites/remove/${destId}` : `/api/favorites/add/${destId}`;
+        // ### FIX: Use the unified toggle endpoint instead of separate add/remove ###
+        const url = `/api/favorites/toggle/${destId}`;
 
         try {
             const response = await fetch(url, { method: 'POST' });
             const result = await response.json();
 
             if (result.success) {
-                favoriteButton.classList.toggle('favorited');
-                favoriteButton.classList.toggle('not-favorited');
-                favoriteButton.title = favoriteButton.classList.contains('favorited') ? 'Remove from Favorites' : 'Add to Favorites';
-                if (favoriteButton.classList.contains('favorited')) favoriteIds.add(destId); else favoriteIds.delete(destId);
-            } else { alert(result.message || 'An error occurred.'); }
+                // Update UI based on the new state returned by the server
+                if (result.is_favourite) {
+                    favoriteButton.classList.add('favorited');
+                    favoriteButton.classList.remove('not-favorited');
+                    favoriteButton.title = 'Remove from Favorites';
+                    favoriteIds.add(destId);
+                } else {
+                    favoriteButton.classList.remove('favorited');
+                    favoriteButton.classList.add('not-favorited');
+                    favoriteButton.title = 'Add to Favorites';
+                    favoriteIds.delete(destId);
+                }
+            } else { 
+                alert(result.message || 'An error occurred.'); 
+            }
         } catch (error) {
             console.error('Favorite toggle error:', error);
             alert('Could not update favorite status. Please try again.');

@@ -188,9 +188,16 @@ def toggle_favorite(dest_id):
 @views_bp.route('/api/favorites/add/<int:dest_id>', methods=['POST'])
 @login_required
 def add_favorite(dest_id):
-    # ... (code is fine, but toggle_favorite is now used instead)
-    # ...
-    pass
+    try:
+        user = User.query.get(session['user_id'])
+        destination = Destination.query.get_or_404(dest_id)
+        if destination not in user.favorites:
+            user.favorites.append(destination)
+            db.session.commit()
+        return jsonify({'success': True, 'message': 'Added to favorites.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
 
 @views_bp.route('/api/favorites/remove/<int:dest_id>', methods=['POST'])
 @login_required
@@ -211,5 +218,19 @@ def remove_favorite(dest_id):
 @views_bp.route('/api/delete-route-history/<int:history_id>', methods=['POST'])
 @login_required
 def delete_route_history(history_id):
-    # ...
-    pass
+    try:
+        # Find the route history entry that matches the ID and belongs to the current user
+        history_to_delete = RouteHistory.query.filter_by(id=history_id, user_id=session['user_id']).first()
+
+        if history_to_delete:
+            db.session.delete(history_to_delete)
+            db.session.commit()
+            # MODIFIED: A more specific success message
+            return jsonify({'success': True, 'message': 'Route history was successfully deleted.'})
+        else:
+            # The entry either doesn't exist or doesn't belong to this user
+            return jsonify({'success': False, 'message': 'Route history not found or access denied.'}), 404
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting route history: {e}")
+        return jsonify({'success': False, 'message': 'A server error occurred while deleting the route.'}), 500
